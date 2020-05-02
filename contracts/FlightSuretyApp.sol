@@ -28,12 +28,18 @@ contract FlightSuretyApp {
 
     bool private operational = true;
 
+    uint M = 2;                        //Minimum number of votes to register an airline; used for multi-sig consensus.
+                                    //Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
+                                    //So, the first value used for M is 2: 50% of 4 airlines.
+                                    //M will be updated by  registerAirline function as the number of registering flights changes
+    address[] multiCalls = new address[](0);   //Array used to store voting addresses on registering a new airline.
+
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
         uint256 updatedTimestamp;
         address airline;
-    }
+   }
     mapping(bytes32 => Flight) private flights;
 
 
@@ -87,7 +93,7 @@ contract FlightSuretyApp {
 
     function isOperational()
                             public
-                            pure
+                            view //pure
                             returns(bool)
     {
         return operational;  // Modify to call data contract's status
@@ -105,6 +111,8 @@ contract FlightSuretyApp {
                             external
                             requireContractOwner
     {
+        require(mode != operational, "Operational status already set to given mode");
+        require(msg.sender == contractOwner, "Message sender is not allowed to change the operational mode of the contract");
         operational = mode;
     }
 
@@ -119,13 +127,49 @@ contract FlightSuretyApp {
     */
     function registerAirline
                             (
+                                address airline
                             )
                             external
-                            pure
+                            view //pure
                             requireIsOperational()
                             returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        require(FlightSuretyData.isRegistered(airline), "This airline is already registered.");
+        require(FlightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
+        
+
+        if(FlightSuretyData.airlinesCount < 4) //Multi-party Consensus does not apply yet
+        {
+            FlightSuretyData.registerAirline(airline);
+            M = FlightSuretyData.airlinesCount.div(2);   //Update M to be 50% of registered airlines
+            return(true, 0);
+        }
+        //Otherwise (M>4), apply multisig:
+        bool isDuplicate = false;
+
+        for(uint c = 0; c < multiCalls.length; c++)
+        {
+            if(multiCalls[c] == msg.sender)
+            {
+                isDuplicate = true;
+                break;
+            }
+        }
+
+        require(!isDuplicate, "Caller already voted on adding this flight");
+
+        multiCalls.push(msg.sender);
+
+        votes = multiCalls.length;
+
+        if(votes >= M)      //Voting threshold reached -> Register the airline
+        {
+            FlightSuretyData.registerAirline(airline);
+            multiCalls = new address[](0);      //Reset list of voters
+            success = true;
+            M = FlightSuretyData.airlinesCount.div(2);   //Update M to be 50% of registered airlines
+        }
+        return (success, votes);
     }
 
 
@@ -137,7 +181,7 @@ contract FlightSuretyApp {
                                 (
                                 )
                                 external
-                                pure
+                                view //pure
                                 requireIsOperational()
     {
 
@@ -155,7 +199,7 @@ contract FlightSuretyApp {
                                     uint8 statusCode
                                 )
                                 internal
-                                pure
+                                view //pure
                                 requireIsOperational()
     {
     }

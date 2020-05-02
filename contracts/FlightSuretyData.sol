@@ -11,7 +11,9 @@ contract FlightSuretyData {
 
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-
+    mapping(address => uint) private airlines;                       //Airlines are contract accounts, so we represent them as addresses.
+                                                                        //Another approach can be to make a struct Airline. But let's keep it simple.
+    uint256 public airlinesCount = 0;                                   //The number of registered airlines.
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -27,6 +29,7 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
+        airlines[msg.sender] = 1;      //Project Specification: First airline is registered when contract is deployed.
     }
 
     /********************************************************************************************/
@@ -86,8 +89,29 @@ contract FlightSuretyData {
                             external
                             requireContractOwner
     {
+        require(mode != operational, "Operational status already set to given mode");
+        require(msg.sender == contractOwner, "Message sender is not allowed to change the operational mode of the contract");
         operational = mode;
     }
+
+     /**
+    * @dev Checks if an airline is already registered
+    *      Can only be called from FlightSuretyApp contract
+    *
+    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
+    */
+    function isRegistered
+                            (
+                                address airline
+                            )
+                            external
+                            view //pure
+                            requireIsOperational()
+                            returns(bool)
+    {
+        return (airlines[airline] == 1);
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -97,14 +121,18 @@ contract FlightSuretyData {
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
     *
+    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
     */
     function registerAirline
                             (
+                                address airline
                             )
                             external
-                            pure
+                            view //pure
                             requireIsOperational()
     {
+        airlines[airline] = 1;
+        airlinesCount++;
     }
 
 
@@ -129,7 +157,7 @@ contract FlightSuretyData {
                                 (
                                 )
                                 external
-                                pure
+                                view //pure
                                 requireIsOperational()
     {
     }
@@ -142,7 +170,7 @@ contract FlightSuretyData {
                             (
                             )
                             external
-                            pure
+                            view //pure
                             requireIsOperational()
     {
     }
