@@ -9,11 +9,16 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    struct Airline{
+        bytes name;
+        bool isRegistered;
+        bool canVote;
+    }
     address private contractOwner;                                      // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
-    mapping(address => uint) private airlines;                       //Airlines are contract accounts, so we represent them as addresses.
+    mapping(address => Airline) private airlines;                       //Airlines are contract accounts, so we represent them as addresses.
                                                                         //Another approach can be to make a struct Airline. But let's keep it simple.
-    uint256 public airlinesCount = 0;                                   //The number of registered airlines.
+    uint256 public airlinesCount;                                   //The number of registered airlines.
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -29,7 +34,9 @@ contract FlightSuretyData {
                                 public
     {
         contractOwner = msg.sender;
-        airlines[msg.sender] = 1;      //Project Specification: First airline is registered when contract is deployed.
+        airlines[msg.sender].isRegistered = true;      //Project Specification: First airline is registered when contract is deployed.
+        airlines[msg.sender].canVote = true;            //TODO: Update later with an airline address
+        airlinesCount = 1;
     }
 
     /********************************************************************************************/
@@ -109,7 +116,24 @@ contract FlightSuretyData {
                             requireIsOperational()
                             returns(bool)
     {
-        return (airlines[airline] == 1);
+        return (airlines[airline].isRegistered);
+    }
+
+    /**
+    * @dev Checks if an airline can vote
+    *
+    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
+    */
+    function canVote
+                            (
+                                address airline
+                            )
+                            external
+                            view //pure
+                            requireIsOperational()
+                            returns(bool)
+    {
+        return (airlines[airline].canVote);
     }
 
 
@@ -128,11 +152,31 @@ contract FlightSuretyData {
                                 address airline
                             )
                             external
-                            view //pure
+                            //view //pure
                             requireIsOperational()
     {
-        airlines[airline] = 1;
+        airlines[airline].isRegistered = true;
+        airlines[airline].canVote = false;
+
         airlinesCount++;
+    }
+
+    /**
+    * @dev Add an airline to the registration queue
+    *      Can only be called from FlightSuretyApp contract
+    *
+    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
+    */
+    function enableVoting
+                            (
+                            )
+                            external
+                            payable//view //pure
+                            requireIsOperational()
+    {
+        require(airlines[msg.sender].isRegistered, "This airline is not registered");
+        require(msg.value >= 10 ether, "Not enough funds to enable voting for this airline");
+        airlines[msg.sender].canVote = true;
     }
 
 

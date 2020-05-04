@@ -5,6 +5,7 @@ pragma solidity ^0.4.25;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./FlightSuretyData.sol";
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -135,8 +136,6 @@ contract FlightSuretyApp {
                             returns(bool success, uint256 votes)
     {
         require(FlightSuretyData.isRegistered(airline), "This airline is already registered.");
-        require(FlightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
-        
 
         if(FlightSuretyData.airlinesCount < 4) //Multi-party Consensus does not apply yet
         {
@@ -145,6 +144,8 @@ contract FlightSuretyApp {
             return(true, 0);
         }
         //Otherwise (M>4), apply multisig:
+        require(FlightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
+
         bool isDuplicate = false;
 
         for(uint c = 0; c < multiCalls.length; c++)
