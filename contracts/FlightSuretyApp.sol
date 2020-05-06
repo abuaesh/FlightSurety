@@ -12,7 +12,8 @@ import "./FlightSuretyData.sol";
 /************************************************** */
 contract FlightSuretyApp {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
-
+    FlightSuretyData flightSuretyData;  //Instantiate a variable of the data contract to access its methods;
+                                        //Another approach that will save you gas, is to create an interface to the data contract here
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
@@ -86,6 +87,7 @@ contract FlightSuretyApp {
                                 public
     {
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(msg.sender);        // now flightSuretyData has the expected methods
     }
 
     /********************************************************************************************/
@@ -131,20 +133,21 @@ contract FlightSuretyApp {
                                 address airline
                             )
                             external
-                            view //pure
+                            //This function changes state but does not take fees: non-payable (which is the default)
                             requireIsOperational()
                             returns(bool success, uint256 votes)
     {
-        require(FlightSuretyData.isRegistered(airline), "This airline is already registered.");
+        require(flightSuretyData.isRegistered(airline), "This airline is already registered.");
 
-        if(FlightSuretyData.airlinesCount < 4) //Multi-party Consensus does not apply yet
+        if(flightSuretyData.RegisteredAirlinesCount() < 4) //Multi-party Consensus does not apply yet
         {
-            FlightSuretyData.registerAirline(airline);
-            M = FlightSuretyData.airlinesCount.div(2);   //Update M to be 50% of registered airlines
+            flightSuretyData.registerAirline(airline);
+            M = flightSuretyData.RegisteredAirlinesCount();
+            M = M.div(2);   //Update M to be 50% of registered airlines
             return(true, 0);
         }
         //Otherwise (M>4), apply multisig:
-        require(FlightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
+        require(flightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
 
         bool isDuplicate = false;
 
@@ -165,10 +168,11 @@ contract FlightSuretyApp {
 
         if(votes >= M)      //Voting threshold reached -> Register the airline
         {
-            FlightSuretyData.registerAirline(airline);
+            flightSuretyData.registerAirline(airline);
             multiCalls = new address[](0);      //Reset list of voters
             success = true;
-            M = FlightSuretyData.airlinesCount.div(2);   //Update M to be 50% of registered airlines
+            M = uint(flightSuretyData.RegisteredAirlinesCount());
+            M = M.div(2);   //Update M to be 50% of registered airlines
         }
         return (success, votes);
     }

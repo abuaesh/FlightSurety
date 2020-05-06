@@ -18,7 +18,7 @@ contract FlightSuretyData {
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     mapping(address => Airline) private airlines;                       //Airlines are contract accounts, so we represent them as addresses.
                                                                         //Another approach can be to make a struct Airline. But let's keep it simple.
-    uint256 public airlinesCount;                                   //The number of registered airlines.
+    uint256 private airlinesCount;                                   //The number of registered airlines.
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -136,6 +136,20 @@ contract FlightSuretyData {
         return (airlines[airline].canVote);
     }
 
+ /**
+    * @dev Returns the number of registered airlines
+    *
+    */
+    function RegisteredAirlinesCount
+                            (
+                            )
+                            external
+                            view //pure
+                            //requireIsOperational()
+                            returns(uint)
+    {
+        return (airlinesCount);
+    }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
