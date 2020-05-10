@@ -30,12 +30,13 @@ contract FlightSuretyData {
     */
     constructor
                                 (
+                                    address firstAirline
                                 )
                                 public
     {
         contractOwner = msg.sender;
-        airlines[msg.sender].isRegistered = true;      //Project Specification: First airline is registered when contract is deployed.
-        airlines[msg.sender].canVote = true;            //TODO: Update later with an airline address
+        airlines[firstAirline].isRegistered = true;      //Project Specification: First airline is registered when contract is deployed.
+        airlines[firstAirline].canVote = true;
         airlinesCount = 1;
     }
 

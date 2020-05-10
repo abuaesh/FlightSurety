@@ -5,7 +5,7 @@ pragma solidity ^0.4.25;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./FlightSuretyData.sol";
+//import "./FlightSuretyData.sol"; //No need for raw import since an interface to the data contract is added to the end
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -83,17 +83,26 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                    address dataContract
                                 )
                                 public
     {
         contractOwner = msg.sender;
-        flightSuretyData = FlightSuretyData(msg.sender);        // now flightSuretyData has the expected methods
+        flightSuretyData = FlightSuretyData(dataContract);        // now flightSuretyData has the expected methods
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
-
+    function setDataContractAddress
+                                (
+                                    address dataContract
+                                )
+                                external
+                                requireContractOwner
+    {
+        flightSuretyData = FlightSuretyData(dataContract);
+    }
     function isOperational()
                             public
                             view //pure
@@ -122,7 +131,6 @@ contract FlightSuretyApp {
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
-
 
    /**
     * @dev Add an airline to the registration queue
@@ -299,8 +307,8 @@ contract FlightSuretyApp {
     function getMyIndexes
                             (
                             )
-                            view
                             external
+                            view
                             returns(uint8[3])
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
@@ -326,7 +334,9 @@ contract FlightSuretyApp {
                         external
                         requireIsOperational()
     {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
+        require((oracles[msg.sender].indexes[0] == index) ||
+                (oracles[msg.sender].indexes[1] == index) ||
+                (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
@@ -353,8 +363,8 @@ contract FlightSuretyApp {
                             string flight,
                             uint256 timestamp
                         )
-                        pure
                         internal
+                        pure
                         returns(bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
@@ -406,3 +416,24 @@ contract FlightSuretyApp {
 // endregion
 
 }
+
+
+
+//Add the interface of the data contract
+
+contract FlightSuretyData{
+    function isOperational() public view returns(bool);
+    function setOperatingStatus(bool mode) external;
+    function isRegistered(address airline) external view returns(bool);
+    function canVote(address airline) external view returns(bool);
+    function RegisteredAirlinesCount() external view returns(uint);
+    function registerAirline(address airline) external;
+    function enableVoting() external payable;
+    function buy() external payable;
+    function creditInsurees() external view;
+    function pay() external view;
+    function fund() public payable;
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) internal pure returns(bytes32);
+    function() external payable;
+}
+
