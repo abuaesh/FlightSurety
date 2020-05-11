@@ -19,6 +19,7 @@ contract FlightSuretyData {
     mapping(address => Airline) private airlines;                       //Airlines are contract accounts, so we represent them as addresses.
                                                                         //Another approach can be to make a struct Airline. But let's keep it simple.
     uint256 private airlinesCount;                                   //The number of registered airlines.
+    mapping(address => bool) private authorizedCallers;             //Used to keep track of which app contracts can access this contract
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -70,6 +71,23 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
+
+    /**
+    * @dev Sets which app contracts can access this data contract
+    *
+    * This method is used to authorize a FlightSuretyApp contract to interact with FlightSuretyData.
+    * You can use it to change which FlightSuretyApp is active. But it is not required
+    */
+    function authorizeCaller
+                            (
+                                address appContract
+                            )
+                            external
+                            requireContractOwner
+                            requireIsOperational
+    {
+        authorizedCallers[appContract] = true;
+    }
 
     /**
     * @dev Get operating status of contract
