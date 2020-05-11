@@ -68,6 +68,17 @@ contract FlightSuretyData {
         _;
     }
 
+    /**
+    * @dev Modifier that requires the calling contract to be in the "authorizedCallers" list
+    *      This is used on all functions(except those who are called by the contract owner)
+    *       to ensure that only the authorized app contracts gain access to the data on this contract
+    */
+    modifier requireAuthorizedCaller()
+    {
+        require(authorizedCallers[msg.sender], "Caller is not authorized");
+        _;  // All modifiers require an "_" which indicates where the function body will be added
+    }
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -97,6 +108,7 @@ contract FlightSuretyData {
     function isOperational()
                             public
                             view
+                            //requireAuthorizedCaller
                             returns(bool)
     {
         return operational;
@@ -132,7 +144,8 @@ contract FlightSuretyData {
                             )
                             external
                             view //pure
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
                             returns(bool)
     {
         return (airlines[airline].isRegistered);
@@ -149,7 +162,8 @@ contract FlightSuretyData {
                             )
                             external
                             view //pure
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
                             returns(bool)
     {
         return (airlines[airline].canVote);
@@ -164,7 +178,8 @@ contract FlightSuretyData {
                             )
                             external
                             view //pure
-                            //requireIsOperational()
+                            //requireIsOperational  //OK to reveal the count even if contract is not operational
+                            //requireAuthorizedCaller
                             returns(uint)
     {
         return (airlinesCount);
@@ -186,7 +201,8 @@ contract FlightSuretyData {
                             )
                             external
                             //view //pure
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
         airlines[airline].isRegistered = true;
         airlines[airline].canVote = false;
@@ -205,7 +221,8 @@ contract FlightSuretyData {
                             )
                             external
                             payable//view //pure
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
         require(airlines[msg.sender].isRegistered, "This airline is not registered");
         require(msg.value >= 10 ether, "Not enough funds to enable voting for this airline");
@@ -222,7 +239,8 @@ contract FlightSuretyData {
                             )
                             external
                             payable
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
 
     }
@@ -235,7 +253,8 @@ contract FlightSuretyData {
                                 )
                                 external
                                 view //pure
-                                requireIsOperational()
+                                requireIsOperational
+                                //requireAuthorizedCaller
     {
     }
 
@@ -248,7 +267,8 @@ contract FlightSuretyData {
                             )
                             external
                             view //pure
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
     }
 
@@ -262,7 +282,8 @@ contract FlightSuretyData {
                             )
                             public
                             payable
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
     }
 
@@ -272,8 +293,8 @@ contract FlightSuretyData {
                             string memory flight,
                             uint256 timestamp
                         )
-                        pure
                         internal
+                        pure
                         returns(bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
@@ -286,7 +307,8 @@ contract FlightSuretyData {
     function()
                             external
                             payable
-                            requireIsOperational()
+                            requireIsOperational
+                            //requireAuthorizedCaller
     {
         fund();
     }

@@ -17,7 +17,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
     // Get operating status
-    let status = await config.flightSuretyData.isOperational.call();
+    let status = await config.flightSuretyData.isOperational.call({ from: config.flightSuretyApp.address });
     assert.equal(status, true, "Incorrect initial operating status value");
 
   });
@@ -54,12 +54,13 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it(`(multiparty) can block access to functions using requireIsOperational when operating status is false`, async function () {
 
+    if(await config.flightSuretyData.isOperational.call()) //Make sure the contract is already operational before toggling it to flase
       await config.flightSuretyData.setOperatingStatus(false);
 
       let reverted = false;
       try 
       {
-          await config.flightSurety.setTestingMode(true);
+          await config.flightSuretyData.setTestingMode(true); //fallback function will be called
       }
       catch(e) {
           reverted = true;
@@ -73,6 +74,8 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
     
+    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
+      await config.flightSuretyData.setOperatingStatus(true);
     // ARRANGE
     let newAirline = accounts[2];
 
@@ -83,7 +86,7 @@ contract('Flight Surety Tests', async (accounts) => {
     catch(e) {
 
     }
-    let result = await config.flightSuretyData.isAirline.call(newAirline); 
+    let result = await config.flightSuretyData.isRegistered.call(newAirline); 
 
     // ASSERT
     assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
