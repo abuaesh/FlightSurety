@@ -92,6 +92,29 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
 
   });
+
+  it('(airline) can register an Airline using registerAirline() if it is funded', async () => {
+    
+    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
+      await config.flightSuretyData.setOperatingStatus(true);
+    // ARRANGE
+    let newAirline = accounts[2];
+   // var weiValue = web3.toWei(10,'ether');
+    await config.flightSuretyData.enableVoting.call({from: config.firstAirline, value: web3.utils.toWei( '10', 'ether')})
+
+    // ACT
+    try {
+        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+    }
+    catch(e) {
+
+    }
+    let result = await config.flightSuretyData.isRegistered.call(newAirline); 
+
+    // ASSERT
+    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
+
+  });
  
 
 });
