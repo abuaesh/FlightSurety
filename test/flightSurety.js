@@ -99,8 +99,8 @@ contract('Flight Surety Tests', async (accounts) => {
       await config.flightSuretyData.setOperatingStatus(true);
     // ARRANGE
     let newAirline = accounts[2];
-   // var weiValue = web3.toWei(10,'ether');
-    await config.flightSuretyData.enableVoting.call({from: config.firstAirline, value: web3.utils.toWei( '10', 'ether')})
+    var funds = (new BigNumber(10)).pow(19) ; // 10 ethers     //web3.utils.toWei( '10', 'ether') //web3.toWei(10,'ether');
+    await config.flightSuretyData.enableVoting({from: config.firstAirline, value: funds});
 
     // ACT
     try {
@@ -112,9 +112,80 @@ contract('Flight Surety Tests', async (accounts) => {
     let result = await config.flightSuretyData.isRegistered.call(newAirline); 
 
     // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
+    assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
+    //assert.equal(await config.flightSuretyData.canVote.call(config.firstAirline), true, "Airline should be able to vote if it has provided funding");
 
   });
  
+  it('Fifth and subsequent airlines should be registered if a consensus of 50% of registered airlines is reached', async () => {
+    
+    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
+      await config.flightSuretyData.setOperatingStatus(true);
+    // ARRANGE
 
+    //1. Assign addresses to airlines:
+    let airline2 = accounts[2];
+    let airline3 = accounts[3];
+    let airline4 = accounts[4];
+    let newAirline = accounts[5]; //to be registered by consensus
+    
+    //2. Register new airlines
+    //await config.flightSuretyApp.registerAirline(airline2, {from: config.firstAirline}); 
+    //console.log('\nairline1 is registered: ', await config.flightSuretyData.isRegistered.call(config.firstAirline));//registered from config file
+    //console.log('\nairline2 is registered: ', await config.flightSuretyData.isRegistered.call(airline2));//already registered from previous test
+    await config.flightSuretyApp.registerAirline(airline3, {from: config.firstAirline});
+    //console.log('\nairline3 is registered: ', await config.flightSuretyData.isRegistered.call(airline3));
+    await config.flightSuretyApp.registerAirline(airline4, {from: config.firstAirline});
+    //console.log('\nairline4 is registered: ', await config.flightSuretyData.isRegistered.call(airline4));
+
+    //3. Enable new airlines to vote
+    var funds = (new BigNumber(10)).pow(19); //10 ethers  
+    //console.log('\nairline1 is funded: ', await config.flightSuretyData.canVote.call(config.firstAirline)); //funded in the previous test
+    await config.flightSuretyData.enableVoting({from: airline2, value: funds});
+    //console.log('\nairline2 is funded: ', await config.flightSuretyData.canVote.call(airline2));
+    await config.flightSuretyData.enableVoting({from: airline3, value: funds});
+    //console.log('\nairline3 is funded: ', await config.flightSuretyData.canVote.call(airline3));
+    await config.flightSuretyData.enableVoting({from: airline4, value: funds});
+    //console.log('\nairline4 is funded: ', await config.flightSuretyData.canVote.call(airline4));
+    
+    // ACT
+    await config.flightSuretyApp.registerAirline(newAirline, {from: airline3});
+    //console.log('\nAirline1 vote- success:', result[0], '\tvotes:', result[1]);
+    await config.flightSuretyApp.registerAirline(newAirline, {from: airline4});
+    //console.log('\nAirline3- succuess:', result[0], '\tvotes:', result[1]);
+    //await config.flightSuretyApp.registerAirline(newAirline, {from: airline4});
+    //console.log('\nAirline4- succuess:', result[0], '\tvotes:', result[1]);
+
+    result = await config.flightSuretyData.isRegistered.call(newAirline); 
+
+    // ASSERT
+    assert.equal(result, true, "Fifth (and subsequent) airlines should  be registered if a 50% consensus is reached");
+  });
+  it('Fifth (and above) airlines should not be registered if less than 50% voted', async () => {
+    
+    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
+      await config.flightSuretyData.setOperatingStatus(true);
+    // ARRANGE
+
+    //1. Assign addresses to airlines:
+    let airline2 = accounts[2];
+    let airline3 = accounts[3];
+    let airline4 = accounts[4];
+    let newAirline = accounts[6]; //to be registered by consensus
+    
+    //2. Register new airlines
+    //Done in previous test
+
+    //3. Enable new airlines to vote
+    //Done in previous test
+    
+    // ACT
+    await config.flightSuretyApp.registerAirline(newAirline, {from: airline3});
+    //await config.flightSuretyApp.registerAirline(newAirline, {from: airline4});
+
+    result = await config.flightSuretyData.isRegistered.call(newAirline); 
+
+    // ASSERT
+    assert.equal(result, false, "Fifth (and above) airlines should not be registered if less than 50% voted");
+  });
 });

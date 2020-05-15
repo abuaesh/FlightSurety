@@ -30,11 +30,13 @@ contract FlightSuretyApp {
 
     bool private operational = true;
 
-    uint M = 2;                        //Minimum number of votes to register an airline; used for multi-sig consensus.
+    uint M = 2;                        //Minimum number of votes to perform critical operations
+                                        //(eg. register an airline, change operational status); used for multi-sig consensus.
                                     //Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
                                     //So, the first value used for M is 2: 50% of 4 airlines.
                                     //M will be updated by  registerAirline function as the number of registering flights changes
-    address[] multiCalls = new address[](0);   //Array used to store voting addresses on registering a new airline.
+    address[] multiCallsReg = new address[](0);   //Array used to store voting addresses on registering a new airline.
+    address[] multiCallsOp = new address[](0);   //Array used to store voting addresses on changing the operational status of the contract.
 
     struct Flight {
         bool isRegistered;
@@ -121,11 +123,43 @@ contract FlightSuretyApp {
                                 bool mode
                             )
                             external
-                            requireContractOwner
+                            //requireContractOwner
+                            returns(bool success, uint votes)
     {
         require(mode != operational, "Operational status already set to given mode");
-        require(msg.sender == contractOwner, "Message sender is not allowed to change the operational mode of the contract");
-        operational = mode;
+        require(msg.sender == contractOwner || flightSuretyData.canVote(msg.sender), "Message sender cannot vote on changing operational mode");
+        if(flightSuretyData.RegisteredAirlinesCount() < 4 ) //Multi-party Consensus does not apply yet
+        {
+            require(msg.sender == contractOwner, "Only contract owner can change the mode at this time"); //Only contract owner can change op mode
+            operational = mode;
+            return(true, 0);
+        }
+
+        bool isDuplicate = false;
+
+            for(uint c = 0; c < multiCallsOp.length; c++)
+            {
+                if(multiCallsOp[c] == msg.sender)
+                {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            require(!isDuplicate, "Caller already voted on changing operational mode");
+
+            multiCallsOp.push(msg.sender);
+
+            votes = multiCallsOp.length;
+
+            if(votes >= M)      //Voting threshold reached -> Change operational mode
+            {
+                operational = mode;
+                multiCallsOp = new address[](0);      //Reset list of voters
+                success = true;
+            }
+
+        return(success, votes);
     }
 
     /********************************************************************************************/
@@ -145,43 +179,46 @@ contract FlightSuretyApp {
                             requireIsOperational()
                             returns(bool success, uint256 votes)
     {
-        require(flightSuretyData.isRegistered(airline), "This airline is already registered.");
+        require(flightSuretyData.isRegistered(airline) == false, "This airline is already registered.");
+        require(flightSuretyData.canVote(msg.sender), "This airline did not provide funding in order to vote on adding new airlines");
 
         if(flightSuretyData.RegisteredAirlinesCount() < 4) //Multi-party Consensus does not apply yet
         {
             flightSuretyData.registerAirline(airline);
-            M = flightSuretyData.RegisteredAirlinesCount();
-            M = M.div(2);   //Update M to be 50% of registered airlines
-            return(true, 0);
-        }
-        //Otherwise (M>4), apply multisig:
-        require(flightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
-
-        bool isDuplicate = false;
-
-        for(uint c = 0; c < multiCalls.length; c++)
-        {
-            if(multiCalls[c] == msg.sender)
-            {
-                isDuplicate = true;
-                break;
-            }
-        }
-
-        require(!isDuplicate, "Caller already voted on adding this flight");
-
-        multiCalls.push(msg.sender);
-
-        votes = multiCalls.length;
-
-        if(votes >= M)      //Voting threshold reached -> Register the airline
-        {
-            flightSuretyData.registerAirline(airline);
-            multiCalls = new address[](0);      //Reset list of voters
             success = true;
-            M = uint(flightSuretyData.RegisteredAirlinesCount());
-            M = M.div(2);   //Update M to be 50% of registered airlines
+            votes = 0;
         }
+        //Otherwise (M>=4), apply multisig:
+        //require(flightSuretyData.canVote(msg.sender), "Message sender is not authorized to register a new airline.");
+        else{
+            bool isDuplicate = false;
+
+            for(uint c = 0; c < multiCallsReg.length; c++)
+            {
+                if(multiCallsReg[c] == msg.sender)
+                {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            require(!isDuplicate, "Caller already voted on adding this flight");
+
+            multiCallsReg.push(msg.sender);
+
+            votes = multiCallsReg.length;
+
+            if(votes >= M)      //Voting threshold reached -> Register the airline
+            {
+                flightSuretyData.registerAirline(airline);
+                multiCallsReg = new address[](0);      //Reset list of voters
+                success = true;
+                //Update M to be 50% of registered airlines
+                M = flightSuretyData.RegisteredAirlinesCount();
+                M = M.div(2);
+            }
+        } //end else
+
         return (success, votes);
     }
 

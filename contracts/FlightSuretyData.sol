@@ -37,7 +37,7 @@ contract FlightSuretyData {
     {
         contractOwner = msg.sender;
         airlines[firstAirline].isRegistered = true;      //Project Specification: First airline is registered when contract is deployed.
-        airlines[firstAirline].canVote = true;
+        airlines[firstAirline].canVote = false;    //First airline must provide funding before it can vote for others to join
         airlinesCount = 1;
     }
 
@@ -204,6 +204,7 @@ contract FlightSuretyData {
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        //require(airlines[airline].isRegistered == false, "This airline is already registered"); //App contract already checks it.
         airlines[airline].isRegistered = true;
         airlines[airline].canVote = false;
 
@@ -224,9 +225,11 @@ contract FlightSuretyData {
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        require(airlines[msg.sender].canVote == false, "This airline already can vote");
         require(airlines[msg.sender].isRegistered, "This airline is not registered");
         require(msg.value >= 10 ether, "Not enough funds to enable voting for this airline");
         airlines[msg.sender].canVote = true;
+        require(airlines[msg.sender].canVote, "Failed to enable voting!");
     }
 
 
