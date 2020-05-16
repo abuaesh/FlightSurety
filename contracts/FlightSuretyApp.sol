@@ -35,8 +35,8 @@ contract FlightSuretyApp {
                                     //Registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines
                                     //So, the first value used for M is 2: 50% of 4 airlines.
                                     //M will be updated by  registerAirline function as the number of registering flights changes
-    address[] multiCallsReg = new address[](0);   //Array used to store voting addresses on registering a new airline.
-    address[] multiCallsOp = new address[](0);   //Array used to store voting addresses on changing the operational status of the contract.
+    address[] private multiCallsReg = new address[](0);   //Array used to store voting addresses on registering a new airline.
+    address[] private multiCallsOp = new address[](0);   //Array used to store voting addresses on changing operational mode of the contract.
 
     struct Flight {
         bool isRegistered;

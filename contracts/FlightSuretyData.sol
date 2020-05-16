@@ -20,6 +20,8 @@ contract FlightSuretyData {
                                                                         //Another approach can be to make a struct Airline. But let's keep it simple.
     uint256 private airlinesCount;                                   //The number of registered airlines.
     mapping(address => bool) private authorizedCallers;             //Used to keep track of which app contracts can access this contract
+    uint M =2;      //Voting threshold, starts when there are at least 4 registered airlines
+    address[] private multiCallsOp  = new address[](0);    //List of voters on changing the operational mode
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -114,6 +116,59 @@ contract FlightSuretyData {
         return operational;
     }
 
+    /**
+    * @dev Checks if an airline can vote
+    *
+    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
+    */
+    function canVote
+                            (
+                                address airline
+                            )
+                            external
+                            view //pure
+                            requireIsOperational
+                            //requireAuthorizedCaller
+                            returns(bool)
+    {
+        return (airlines[airline].canVote);
+    }
+    /**
+    * @dev Does the voting work for multisignature functions
+    * Keeps track of voting responses,
+    * and returns true if the voting threshold is rechead so the caller function can perform the task
+    */
+    function vote(address voter)
+            private
+            returns(bool success)
+    {
+        require(voter == contractOwner || airlines[voter].canVote, "This address cannot vote.");
+        success = false;
+        bool isDuplicate = false;
+
+            for(uint c = 0; c < multiCallsOp.length; c++)
+            {
+                if(multiCallsOp[c] == voter)
+                {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+
+            require(!isDuplicate, "Caller already voted on changing operational mode");
+
+            multiCallsOp.push(voter);
+
+            uint votes = multiCallsOp.length;
+
+            if(votes >= M)      //Voting threshold reached -> Change operational mode
+            {
+                multiCallsOp = new address[](0);      //Reset list of voters
+                success = true;
+            }
+
+        return(success);
+    }
 
     /**
     * @dev Sets contract operations on/off
@@ -125,11 +180,19 @@ contract FlightSuretyData {
                                 bool mode
                             )
                             external
-                            requireContractOwner
+                            //requireContractOwner
     {
         require(mode != operational, "Operational status already set to given mode");
-        require(msg.sender == contractOwner, "Message sender is not allowed to change the operational mode of the contract");
-        operational = mode;
+        
+        if(airlinesCount < 4) //Voting threshold not reached yet
+        {
+            require(msg.sender == contractOwner, "Message sender is not allowed to change the operational mode of the contract");
+            operational = mode;
+
+        }
+        else
+            if(vote(msg.sender))
+                operational = mode;
     }
 
      /**
@@ -149,24 +212,6 @@ contract FlightSuretyData {
                             returns(bool)
     {
         return (airlines[airline].isRegistered);
-    }
-
-    /**
-    * @dev Checks if an airline can vote
-    *
-    *       Airlines are assumed to be smart contracts, so they are represented here as addresses to contract accounts.
-    */
-    function canVote
-                            (
-                                address airline
-                            )
-                            external
-                            view //pure
-                            requireIsOperational
-                            //requireAuthorizedCaller
-                            returns(bool)
-    {
-        return (airlines[airline].canVote);
     }
 
  /**
