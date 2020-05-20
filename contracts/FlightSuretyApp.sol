@@ -276,7 +276,60 @@ contract FlightSuretyApp {
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
+// region INSURANCE PURCHASE MANAGEMENT
+struct insuredFlight{
+    bytes32 flightName;
+    uint amount;
+}
 
+mapping(address => insuredFlight[]) insuredFlights;
+
+/**
+    * @dev Allow a user to buy insurance
+    *
+    */
+    function buyInsurance
+                            (
+                                address customer,
+                                bytes32 flight,
+                                uint amount
+                            )
+                            external
+                            payable
+                            requireIsOperational()
+                            returns(bool success)
+    {
+        // 1. Check the flight can be insured:
+        require(flights[flight].isRegistered, 'This flight is not registered for insurance');
+
+        // 2. Check insurance amount is less than 1 ether and more than 0:
+        require(msg.value <= 1 ether && msg.value > 0, 'You must pay an insurance amount up to 1 ether.');
+
+        // 3. Check the customer did not insure this flight previously:
+        bool isInsured = false;
+        insuredFlight[] customerInsured = insuredFlights[customer]; //retrieve array of flights insured by this customer
+
+        if(customerInsured.length != 0) //Customer has insured some flights from before
+        {
+            for(uint i = 0; i < customerInsured.length; i++)
+                if(customerInsured[i].flightName == flight)
+                    isInsured = true;
+        }
+        else    //First time this customer insures a flight -> instantiate their insured flights array
+        {
+            insuredFlights[customer] = new insuredFlight[] (0);
+
+        }
+
+        require(!isInsured,'This customer already insured this flight.');
+
+        // 4. Accept insurance:
+        insuredFlight newInsurance;
+        newInsurance.flightName = flight;
+        newInsurance.amount = msg.value;
+        insuredFlights[customer].push(newInsurance);
+    }
+//end region
 
 // region ORACLE MANAGEMENT
 

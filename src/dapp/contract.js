@@ -18,6 +18,7 @@ export default class Contract {
         this.web3.eth.getAccounts((error, accts) => {
            
             this.owner = accts[0];
+            //this.owner = '0xFEA8e051Bf37bd55a1C41D40B1167409C26B1E3b';
 
             let counter = 1;
             
