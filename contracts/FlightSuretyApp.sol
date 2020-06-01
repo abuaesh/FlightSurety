@@ -1,4 +1,5 @@
 pragma solidity ^0.4.25;
+pragma experimental ABIEncoderV2;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
@@ -229,12 +230,25 @@ contract FlightSuretyApp {
     */
     function registerFlight
                                 (
+                                    string flight
                                 )
                                 external
-                                view //pure
+                                //view //pure
                                 requireIsOperational()
     {
-
+        // 1. Convert flight name from string to bytes32
+        string memory newFlight = flight;
+        bytes32 Flight;
+        assembly {
+            Flight := mload(add(newFlight, 32)) //convert flight name from string to bytes32
+        }
+        // 2. Ensure the flight is not already insured
+        require(!flights[Flight].isRegistered, 'This flight is already registered');
+        //3. Register the new flight
+        flights[Flight].isRegistered = true;
+        flights[Flight].statusCode = STATUS_CODE_UNKNOWN;
+        //flights[Flight].airline = msg.sender;
+        //Update the timestamp and airlines somehow...
     }
 
    /**
@@ -277,12 +291,6 @@ contract FlightSuretyApp {
         emit OracleRequest(index, airline, flight, timestamp);
     }
 // region INSURANCE PURCHASE MANAGEMENT
-struct insuredFlight{
-    bytes32 flightName;
-    uint amount;
-}
-
-mapping(address => insuredFlight[]) insuredFlights;
 
 /**
     * @dev Allow a user to buy insurance
@@ -290,44 +298,45 @@ mapping(address => insuredFlight[]) insuredFlights;
     */
     function buyInsurance
                             (
-                                address customer,
-                                bytes32 flight,
-                                uint amount
+                                string inFlight
                             )
                             external
                             payable
                             requireIsOperational()
-                            returns(bool success)
     {
-        // 1. Check the flight can be insured:
+
+        // 1. Convert flight name from string to bytes32
+        string memory inFlight2 = inFlight;
+        bytes32 flight;
+        assembly {
+            flight := mload(add(inFlight2, 32)) //convert flight name from string to bytes32
+        }
+
+        // 2. Ensure the flight exists in the supported flights
         require(flights[flight].isRegistered, 'This flight is not registered for insurance');
 
-        // 2. Check insurance amount is less than 1 ether and more than 0:
+        // 3. Check insurance amount is less than 1 ether and more than 0:
         require(msg.value <= 1 ether && msg.value > 0, 'You must pay an insurance amount up to 1 ether.');
 
-        // 3. Check the customer did not insure this flight previously:
-        bool isInsured = false;
-        insuredFlight[] customerInsured = insuredFlights[customer]; //retrieve array of flights insured by this customer
+        //4. Forward call to data contract
+        flightSuretyData.buy(msg.sender, flight, msg.value);
 
-        if(customerInsured.length != 0) //Customer has insured some flights from before
-        {
-            for(uint i = 0; i < customerInsured.length; i++)
-                if(customerInsured[i].flightName == flight)
-                    isInsured = true;
-        }
-        else    //First time this customer insures a flight -> instantiate their insured flights array
-        {
-            insuredFlights[customer] = new insuredFlight[] (0);
+    }
 
-        }
-
-        require(!isInsured,'This customer already insured this flight.');
-
-        // 4. Accept insurance:
-        insuredFlight newInsurance;
-        newInsurance.flightName = flight;
-        newInsurance.amount = msg.value;
-        insuredFlights[customer].push(newInsurance);
+    /**
+    * @dev Allow a user to view the list of flights they  insured
+    *
+    */
+    function viewInsuredFlights
+                            (
+                            )
+                            external
+                            returns(bytes32[] memory insuredFlights, uint[] memory amounts)
+    {
+        //bytes32[] memory insuredF;
+        (insuredFlights, amounts) = flightSuretyData.viewInsuredFlights(msg.sender);
+        //insuredFlights = insuredF;
+        //return(, amounts);
     }
 //end region
 
@@ -519,7 +528,8 @@ contract FlightSuretyData{
     function RegisteredAirlinesCount() external view returns(uint);
     function registerAirline(address airline) external;
     function enableVoting() external payable;
-    function buy() external payable;
+    function buy(address customer, bytes32 flight, uint amount) external payable;
+    function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights, uint[] memory amounts);
     function creditInsurees() external view;
     function pay() external view;
     function fund() public payable;

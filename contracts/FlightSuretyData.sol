@@ -282,15 +282,60 @@ contract FlightSuretyData {
     * @dev Buy insurance for a flight
     *
     */
+    struct insuredFlights{
+    bytes32[] flightNames;
+    uint[] amounts;
+    }
+
+    mapping(address => insuredFlights) allInsuredFlights;
+
     function buy
                             (
+                                address customer,
+                                bytes32 flight,
+                                uint amount
                             )
                             external
                             payable
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        // 1. Check the customer did not insure this flight previously:
+        bool alreadyInsured = false;
 
+        if(allInsuredFlights[customer].flightNames.length > 0) //Customer has insured some flights from before
+        {
+            for(uint i = 0; i < allInsuredFlights[customer].flightNames.length; i++)
+                if((allInsuredFlights[customer].flightNames)[i] == flight)
+                    alreadyInsured = true;
+        }
+        else    //First time this customer insures a flight -> instantiate their insured flights array
+        {
+            allInsuredFlights[customer].flightNames = new bytes32[] (0);
+            allInsuredFlights[customer].amounts = new uint[] (0);
+        }
+
+        require(!alreadyInsured,'This customer already insured this flight.');
+        
+        // 2. Accept insurance:
+        allInsuredFlights[customer].flightNames.push(flight);
+        allInsuredFlights[customer].amounts.push(amount);
+
+    }
+
+    /**
+    * @dev Allow a user to view the list of flights they  insured
+    *
+    */
+    function viewInsuredFlights
+                            (
+                                address customer
+                            )
+                            external
+                            returns(bytes32[] memory, uint[] memory)
+    {
+        return( allInsuredFlights[customer].flightNames,
+                allInsuredFlights[customer].amounts);
     }
 
     /**

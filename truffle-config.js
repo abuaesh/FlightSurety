@@ -1,12 +1,12 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
-var mnemonic = "narrow kingdom sing pride ladder false umbrella circle immune mosquito traffic tuna";
+var mnemonic = "purchase enlist exact atom cross foam foot girl cotton scrub vibrant dad";
 
 module.exports = {
   networks: {
     development: {
       host: "127.0.0.1",     // Localhost
-      port: 8545,            // Standard Ganache UI port
-      network_id: "*", 
+      port: 7545,            // Standard Ganache UI port
+      network_id: "5777", 
       gas: 4600000
     },  
     //They say replacing the below code with the above one will solve the nonce problem, let's try

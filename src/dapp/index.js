@@ -15,26 +15,40 @@ import './flightsurety.css';
             console.log(error,result);
             display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
         });
+
+        // Airline registers Flights
+        DOM.elid('register-flight').addEventListener('click', () => {
+            let flight = DOM.elid('new-flight').value;
+            //Forward call to smart contract
+            contract.registerFlight(flight, (error, result) => {
+                display('Register Flight', 'Trigger App contract', [ { label: 'Registration:', error: error,  value: 'Success - registered. ' } ]);
+            });
+        });
     
         // User buys insurance
         DOM.elid('buy-insurance').addEventListener('click', () => {
         // Get User address from Metamask
         if (!contract.owner) {
-            alert("You neeed to install and login to an Ethereum-compatible wallet or extension like MetaMask to use this dApp.");
+            alert("You need to install and login to an Ethereum-compatible wallet or extension like MetaMask to use this dApp.");
             //return false; //Do something to abort the process?
         }
         else{ //Proceed to buy insurance under the user's account
             let flight = DOM.elid('flight-number').value;
-            let insuranceValue = DOM.elid('insurance-value').value;
-            if(confirm('You are about to pay '+ insuranceValue +' Ethers for insuring your trip on flight '+flight+'. The amount will be deducted from the account: ' + contract.owner + '.\nAre you sure?'))
-            {    
-                console.log(contract.owner);
-                    //display('Buy Insurance', 'Buying insurance for account: '+account, [ { label: 'Fetch Flight Status', error: error, value: result} ]);
-                
-                    
-                    //contract.fetchFlightStatus(flight, (error, result) => {
-                    //display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
-                //});
+            let amount = DOM.elid('insurance-value').value;
+            if(confirm('You are about to pay '+ amount +' Ethers for insuring your trip on flight '+flight+'. The amount will be deducted from the account: ' + contract.owner + '.\nAre you sure?'))
+            {                    
+                //Forward call to smart contract
+                contract.buyInsurance(flight, amount, (error, result) => {
+                    display('Buy Insurance', 'Trigger App contract', [ { label: 'Buying result:', error: error,  value: 'Success - insured ' + result.flight + ' with ' + result.amount + ' ethers.'} ]);
+                });
+
+                //Display updated list of all insured flights for this customer
+                contract.viewInsuredFlights((error, result) => {
+                    console.log('Flight insured successfully. Here is the updated list of your insured flights:\n');
+                    //for(var i=0; i<result[0].length; i++)
+                        //console.log(result[0][i] + '\t' + result[1][i] + ' ethers\n');
+                    console.log(JSON.stringify(result));
+                });
             }
 
         }
@@ -46,7 +60,9 @@ import './flightsurety.css';
             let flight = DOM.elid('flight-number').value;
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: JSON.stringify(result)} ]);
+                console.log('fetchFlightStatus in contract.js returned error: ' + error);
+                console.log('fetchFlightStatus in contract.js returned result: ' + result);
             });
         })
     

@@ -48,10 +48,42 @@ export default class Contract {
             flight: flight,
             timestamp: Math.floor(Date.now() / 1000)
         } 
+        var result = self.flightSuretyApp.methods
+                .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
+                .call({ from: self.owner}, callback);
+
+        //console.log('From outside the promise: result is: ' + JSON.stringify(result));
+            
+    }
+
+    buyInsurance(flight, amount, callback) {
+        let self = this;
+        let payload = {
+            flight: flight,
+            amount: amount
+        } 
+        amount *= Math.pow(10, 18);         //convert amount from ethers to wei
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .buyInsurance(payload.flight)
+            .send({ from: self.owner, value: amount}, (error, result) => {
                 callback(error, payload);
             });
+    }
+
+    viewInsuredFlights(callback) {
+        let self = this;
+        
+        self.flightSuretyApp.methods
+            .viewInsuredFlights()
+            .call({from: self.owner}, callback);
+    }
+
+    registerFlight(flight, callback) {
+        let self = this;
+
+        self.flightSuretyApp.methods
+        .registerFlight(flight).send({from: this.airlines[0]}, (error, result) => {
+            callback(error, flight);
+        });
     }
 }
