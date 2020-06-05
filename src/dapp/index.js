@@ -40,15 +40,16 @@ import './flightsurety.css';
                 //Forward call to smart contract
                 contract.buyInsurance(flight, amount, (error, result) => {
                     display('Buy Insurance', 'Trigger App contract', [ { label: 'Buying result:', error: error,  value: 'Success - insured ' + result.flight + ' with ' + result.amount + ' ethers.'} ]);
+                    if(error == ""){//Display updated list of all insured flights for this customer
+                        contract.viewInsuredFlights((error2, result2) => {
+                        console.log('Flight insured successfully. Here is the updated list of your insured flights:\n');
+                        //for(var i=0; i<result[0].length; i++)
+                            //console.log(result[0][i] + '\t' + result[1][i] + ' ethers\n');
+                        console.log(JSON.stringify(result2));
+                    });
+                }else   console.log(error);
                 });
 
-                //Display updated list of all insured flights for this customer
-                contract.viewInsuredFlights((error, result) => {
-                    console.log('Flight insured successfully. Here is the updated list of your insured flights:\n');
-                    //for(var i=0; i<result[0].length; i++)
-                        //console.log(result[0][i] + '\t' + result[1][i] + ' ethers\n');
-                    console.log(JSON.stringify(result));
-                });
             }
 
         }
@@ -61,8 +62,8 @@ import './flightsurety.css';
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: JSON.stringify(result)} ]);
-                console.log('fetchFlightStatus in contract.js returned error: ' + error);
-                console.log('fetchFlightStatus in contract.js returned result: ' + result);
+                //console.log('fetchFlightStatus in contract.js returned error: ' + error);
+                //console.log('fetchFlightStatus in contract.js returned result: ' + result);
             });
         })
     

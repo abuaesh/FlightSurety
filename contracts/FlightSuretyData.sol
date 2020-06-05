@@ -305,7 +305,7 @@ contract FlightSuretyData {
 
         if(allInsuredFlights[customer].flightNames.length > 0) //Customer has insured some flights from before
         {
-            for(uint i = 0; i < allInsuredFlights[customer].flightNames.length; i++)
+            for(uint i = 0; i < (allInsuredFlights[customer].flightNames).length; i++)
                 if((allInsuredFlights[customer].flightNames)[i] == flight)
                     alreadyInsured = true;
         }
@@ -315,7 +315,7 @@ contract FlightSuretyData {
             allInsuredFlights[customer].amounts = new uint[] (0);
         }
 
-        require(!alreadyInsured,'This customer already insured this flight.');
+        require(!alreadyInsured,'You already insured this flight.');
         
         // 2. Accept insurance:
         allInsuredFlights[customer].flightNames.push(flight);
