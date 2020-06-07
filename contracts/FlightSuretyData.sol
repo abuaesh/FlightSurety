@@ -283,8 +283,8 @@ contract FlightSuretyData {
     *
     */
     struct insuredFlights{
-    bytes32[] flightNames;
-    uint[] amounts;
+    bytes32[] flightNames; //a list of insured flights for each customer
+    uint[] amounts; // holds insurance amounts for each insured flight in wei
     }
 
     mapping(address => insuredFlights) allInsuredFlights;
@@ -296,10 +296,11 @@ contract FlightSuretyData {
                                 uint amount
                             )
                             external
-                            payable
+                            //payable   //The fees are kept in the app contract
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        
         // 1. Check the customer did not insure this flight previously:
         bool alreadyInsured = false;
 
@@ -314,12 +315,11 @@ contract FlightSuretyData {
             allInsuredFlights[customer].flightNames = new bytes32[] (0);
             allInsuredFlights[customer].amounts = new uint[] (0);
         }
-
         require(!alreadyInsured,'You already insured this flight.');
-        
+
         // 2. Accept insurance:
         allInsuredFlights[customer].flightNames.push(flight);
-        allInsuredFlights[customer].amounts.push(amount);
+        allInsuredFlights[customer].amounts.push(amount);   //This line is probably the one causing the error!
 
     }
 

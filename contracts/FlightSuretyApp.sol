@@ -317,7 +317,6 @@ contract FlightSuretyApp {
 
         // 3. Check insurance amount is less than 1 ether and more than 0:
         require(msg.value <= 1 ether && msg.value > 0, 'You must pay an insurance amount up to 1 ether.');
-
         //4. Forward call to data contract
         flightSuretyData.buy(msg.sender, flight, msg.value);
 
