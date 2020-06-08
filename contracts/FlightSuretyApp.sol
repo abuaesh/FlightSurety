@@ -330,10 +330,10 @@ contract FlightSuretyApp {
                             (
                             )
                             external
-                            returns(bytes32[] memory insuredFlights, uint[] memory amounts)
+                            returns(bytes32[] memory insuredFlights)
     {
         //bytes32[] memory insuredF;
-        (insuredFlights, amounts) = flightSuretyData.viewInsuredFlights(msg.sender);
+        insuredFlights = flightSuretyData.viewInsuredFlights(msg.sender);
         //insuredFlights = insuredF;
         //return(, amounts);
     }
@@ -528,7 +528,7 @@ contract FlightSuretyData{
     function registerAirline(address airline) external;
     function enableVoting() external payable;
     function buy(address customer, bytes32 flight, uint amount) external payable;
-    function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights, uint[] memory amounts);
+    function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights);
     function creditInsurees() external view;
     function pay() external view;
     function fund() public payable;

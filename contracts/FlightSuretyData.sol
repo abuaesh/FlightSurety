@@ -283,8 +283,10 @@ contract FlightSuretyData {
     *
     */
     struct insuredFlights{
-    bytes32[] flightNames; //a list of insured flights for each customer
-    uint[] amounts; // holds insurance amounts for each insured flight in wei
+    //bytes32[] flightNames; //a list of insured flights for each customer
+    //uint[] amounts; // holds insurance amounts for each insured flight in wei
+    mapping(bytes32 => uint) insuranceDetails; //stores how much did the customer insure for each flight
+    bytes32[] insuranceKeys; //used to search the above mapping--e.g. to view all insured flights
     }
 
     mapping(address => insuredFlights) allInsuredFlights;
@@ -300,9 +302,9 @@ contract FlightSuretyData {
                             requireIsOperational
                             //requireAuthorizedCaller
     {
-        
         // 1. Check the customer did not insure this flight previously:
-        bool alreadyInsured = false;
+        require(allInsuredFlights[customer].insuranceDetails[flight] == 0, 'This flight is already insured by this customer');
+        /*bool alreadyInsured = false;
 
         if(allInsuredFlights[customer].flightNames.length > 0) //Customer has insured some flights from before
         {
@@ -315,12 +317,15 @@ contract FlightSuretyData {
             allInsuredFlights[customer].flightNames = new bytes32[] (0);
             allInsuredFlights[customer].amounts = new uint[] (0);
         }
-        require(!alreadyInsured,'You already insured this flight.');
+        require(!alreadyInsured,'You already insured this flight.');*/
 
         // 2. Accept insurance:
+        allInsuredFlights[customer].insuranceDetails[flight] = amount;
+        allInsuredFlights[customer].insuranceKeys.push(flight);
+        /*
         allInsuredFlights[customer].flightNames.push(flight);
         allInsuredFlights[customer].amounts.push(amount);   //This line is probably the one causing the error!
-
+        */
     }
 
     /**
@@ -332,10 +337,9 @@ contract FlightSuretyData {
                                 address customer
                             )
                             external
-                            returns(bytes32[] memory, uint[] memory)
+                            returns(bytes32[] memory)
     {
-        return( allInsuredFlights[customer].flightNames,
-                allInsuredFlights[customer].amounts);
+        return( allInsuredFlights[customer].insuranceKeys);
     }
 
     /**
