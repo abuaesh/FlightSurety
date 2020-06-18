@@ -70,12 +70,29 @@ export default class Contract {
             });
     }
 
-    viewInsuredFlights(callback) {
+    /*viewInsuredFlights(callback) {
         let self = this;
         
         self.flightSuretyApp.methods
             .viewInsuredFlights()
             .call({from: self.owner}, callback);
+    }*/
+
+    claimInsurance(flight, callback){
+        let self = this;
+
+        /*self.flightSuretyApp.methods
+            .claimInsurance(flight)
+            .call({from: self.owner}, (error, result) => {
+                result /= Math.pow(10, 18); //convert from wei back to ether
+                callback(error, result)}
+                );
+                */
+        var payoutEvent = self.flightSuretyApp.payout();
+        payoutEvent.watch((error, result) => {
+            result /= Math.pow(10, 18); //convert from wei back to ether
+            callback(error, result)}
+            );
     }
 
     registerFlight(flight, callback) {

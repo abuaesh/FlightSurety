@@ -290,7 +290,9 @@ contract FlightSuretyData {
     }
 
     mapping(address => insuredFlights) allInsuredFlights;
-
+     mapping(address => uint256) payouts; //Amounts owed to insurees but have not yet been credited to their accounts
+                                        //These will be credited to the insurees when they initiate a withdrawal.
+    //event  payout(uint amount, address insuree); //This contract is not directly connected to the frontend, no need for events here.
     function buy
                             (
                                 address customer,
@@ -304,28 +306,10 @@ contract FlightSuretyData {
     {
         // 1. Check the customer did not insure this flight previously:
         require(allInsuredFlights[customer].insuranceDetails[flight] == 0, 'This flight is already insured by this customer');
-        /*bool alreadyInsured = false;
-
-        if(allInsuredFlights[customer].flightNames.length > 0) //Customer has insured some flights from before
-        {
-            for(uint i = 0; i < (allInsuredFlights[customer].flightNames).length; i++)
-                if((allInsuredFlights[customer].flightNames)[i] == flight)
-                    alreadyInsured = true;
-        }
-        else    //First time this customer insures a flight -> instantiate their insured flights array
-        {
-            allInsuredFlights[customer].flightNames = new bytes32[] (0);
-            allInsuredFlights[customer].amounts = new uint[] (0);
-        }
-        require(!alreadyInsured,'You already insured this flight.');*/
 
         // 2. Accept insurance:
         allInsuredFlights[customer].insuranceDetails[flight] = amount;
         allInsuredFlights[customer].insuranceKeys.push(flight);
-        /*
-        allInsuredFlights[customer].flightNames.push(flight);
-        allInsuredFlights[customer].amounts.push(amount);   //This line is probably the one causing the error!
-        */
     }
 
     /**
@@ -347,12 +331,35 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                    bytes32 flight,
+                                    address insuree
                                 )
                                 external
-                                view //pure
                                 requireIsOperational
+                                //Apply Re-entrancy Gaurd Here(not required by project)
                                 //requireAuthorizedCaller
+                                returns(uint256 credit) //This is a state-changing function, so it cannot return a value
+                                //We will inform caller of the credit amount by emitting an event
     {
+        //1. Checks
+        credit = allInsuredFlights[insuree].insuranceDetails[flight];
+        require(credit > 0,'You have not insured this flight from before');
+
+        //2. Effects
+            //2.a Update the insurance information in your mapping
+            allInsuredFlights[insuree].insuranceDetails[flight] = 0;
+            //2.b Calculate the amount the customer must be refunded: 1.5 time the insurance amount
+            credit = credit.mul(3);
+            credit = credit.div(2);
+
+        //3. Interaction
+        payouts[insuree].add(credit);
+        //web3.js is not connected to this contract, you need to emit from the app contract
+        //just return the tuples and the app contract should do the emit back to the front end
+        //emit payout(credit, insuree);
+        //Next: when the emitted event is caught in the frontend, allow user to withdraw amount -> withdraw button should appear
+
+        return credit;
     }
 
     /**
@@ -361,12 +368,14 @@ contract FlightSuretyData {
     */
     function pay
                             (
+                                uint credit,
+                                address insuree
                             )
                             external
-                            view //pure
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        insuree.transfer(credit);
     }
 
    /**
@@ -376,12 +385,20 @@ contract FlightSuretyData {
     */
     function fund
                             (
+                                address insuree,
+                                bytes32 flight
                             )
-                            public
+                            external
                             payable
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        // 1. Check the customer did not insure this flight previously:
+        require(allInsuredFlights[insuree].insuranceDetails[flight] == 0, 'This flight is already insured by this customer');
+        // 2. Accept insurance:
+        allInsuredFlights[insuree].insuranceDetails[flight] = msg.value;
+        //allInsuredFlights[insuree].insuranceKeys.push(flight);  //to be able to show the customer later all the flights he insured
+        //feature not required and needs to be fixed later.
     }
 
     function getFlightKey
@@ -407,7 +424,7 @@ contract FlightSuretyData {
                             requireIsOperational
                             //requireAuthorizedCaller
     {
-        fund();
+        //fund();
     }
 
 

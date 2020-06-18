@@ -317,8 +317,11 @@ contract FlightSuretyApp {
 
         // 3. Check insurance amount is less than 1 ether and more than 0:
         require(msg.value <= 1 ether && msg.value > 0, 'You must pay an insurance amount up to 1 ether.');
-        //4. Forward call to data contract
-        flightSuretyData.buy(msg.sender, flight, msg.value);
+        //4. Forward call to the desired function in the data contract: buy or fund
+            //buy keeps the funds in the app contract, while fund forwards the funds to the data contract
+        //flightSuretyData.buy(msg.sender, flight, msg.value);
+        flightSuretyData.fund.value(msg.value)(msg.sender, flight);
+        //Always use fund, since the refund will always happen from the data contract
 
     }
 
@@ -336,6 +339,38 @@ contract FlightSuretyApp {
         insuredFlights = flightSuretyData.viewInsuredFlights(msg.sender);
         //insuredFlights = insuredF;
         //return(, amounts);
+    }
+
+    event  payout(uint amount, address insuree);
+
+
+    function claimInsurance
+                            (
+                                string flight1
+                            )
+                            external
+                            returns(uint256 credit)
+    {
+         // 1. Convert flight name from string to bytes32
+        string memory flight2 = flight1;
+        bytes32 flight;
+        assembly {
+            flight := mload(add(flight2, 32)) //convert flight name from string to bytes32
+        }
+
+        // 2. Ensure the flight exists in the supported flights
+        require(flights[flight].isRegistered, 'This flight is not registered for insurance');
+
+        flights[flight].statusCode = STATUS_CODE_LATE_AIRLINE; //for testing only
+
+        // 3. Ensure the flight status is one that implies refund -> STATUS_CODE_LATE_AIRLINE = 20
+        require(flights[flight].statusCode == STATUS_CODE_LATE_AIRLINE, 'Flight status does not imply insurance refunding');
+
+        // 4. Forward call to data contract for refund
+        credit = flightSuretyData.creditInsurees(flight, msg.sender);
+
+        //5. Emit event for the frontend to allow user to withdraw if they want
+        emit payout(credit, insuree);
     }
 //end region
 
@@ -529,9 +564,9 @@ contract FlightSuretyData{
     function enableVoting() external payable;
     function buy(address customer, bytes32 flight, uint amount) external payable;
     function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights);
-    function creditInsurees() external view;
+    function creditInsurees(bytes32, address) external view returns(uint256 credit);
     function pay() external view;
-    function fund() public payable;
+    function fund(address, bytes32) public payable;
     function getFlightKey(address airline, string memory flight, uint256 timestamp) internal pure returns(bytes32);
     function() external payable;
 }
