@@ -19,10 +19,14 @@ import './flightsurety.css';
         // Airline registers Flights
         DOM.elid('register-flight').addEventListener('click', () => {
             let flight = DOM.elid('new-flight').value;
-            //Forward call to smart contract
-            contract.registerFlight(flight, (error, result) => {
-                display('Register Flight', 'Trigger App contract', [ { label: 'Registration:', error: error,  value: 'Success - registered. ' } ]);
-            });
+            if(flight != '')
+            {
+                //Forward call to smart contract
+                contract.registerFlight(flight, (error, result) => {
+                    display('Register Flight', 'Trigger App contract', [ { label: 'Registration:', error: error,  value: 'Success - registered. ' } ]);
+                });
+            }
+            
         });
     
         // User buys insurance
@@ -72,16 +76,33 @@ import './flightsurety.css';
             let flight = DOM.elid('flight-number-claim').value;
             // Write transaction
             contract.claimInsurance(flight, (error, result) => {
-                display('Insurance Amount', 'Flight '+flight+' Insurance Status: ', [ { label: 'You are legible to a refund of Eth', error: error, value: JSON.stringify(result)} ]);
-                //console.log('fetchFlightStatus in contract.js returned error: ' + error);
-                //console.log('fetchFlightStatus in contract.js returned result: ' + result);
+                display('Insurance Amount', 
+                    'You are legible to a refund for flight '+flight, 
+                    [ { label: 'Refund amount in Ether:', 
+                        error: error, 
+                        value: JSON.stringify(result),
+                        credit: result
+                    } ]);
+                console.log('fetchFlightStatus in contract.js returned error: ' + error);
+                console.log('fetchFlightStatus in contract.js returned result: ' + result);
+                
             });
-        })
+        });
+
+
+        // User-submitted transaction
+        DOM.elid('withdraw-credit').addEventListener('click', () => {
+            console.log('Withdraw button was clicked!');
+        });
     
     });
     
 
 })();
+
+function withdraw(){
+    console.log('withdraw function called!');
+}
 
 function getAccounts(callback) {
     web3.eth.getAccounts((error,result) => {
@@ -102,6 +123,10 @@ function display(title, description, results) {
         let row = section.appendChild(DOM.div({className:'row'}));
         row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
         row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+        if(result.credit)
+            row.appendChild(DOM.div({className: 'col-sm-4 field-value'},  
+            DOM.button('Withdraw', {type:'button', value: 'Withdraw', name:'withdraw-credit'})));
+
         section.appendChild(row);
     })
     displayDiv.append(section);

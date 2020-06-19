@@ -343,7 +343,7 @@ contract FlightSuretyData {
     {
         //1. Checks
         credit = allInsuredFlights[insuree].insuranceDetails[flight];
-        require(credit > 0,'You have not insured this flight from before');
+        require(credit > 0,'You did not insure this flight from before');
 
         //2. Effects
             //2.a Update the insurance information in your mapping

@@ -81,18 +81,19 @@ export default class Contract {
     claimInsurance(flight, callback){
         let self = this;
 
-        /*self.flightSuretyApp.methods
+        self.flightSuretyApp.methods
             .claimInsurance(flight)
             .call({from: self.owner}, (error, result) => {
                 result /= Math.pow(10, 18); //convert from wei back to ether
                 callback(error, result)}
                 );
-                */
+        
+        /* Could not find the correct code for listening to the emitted event
         var payoutEvent = self.flightSuretyApp.payout();
         payoutEvent.watch((error, result) => {
             result /= Math.pow(10, 18); //convert from wei back to ether
             callback(error, result)}
-            );
+            );*/
     }
 
     registerFlight(flight, callback) {
