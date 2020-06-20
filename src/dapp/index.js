@@ -92,7 +92,9 @@ import './flightsurety.css';
 
         // Withdraw Credit
         let withdrawButton = DOM.elid('withdraw-credit');
-        if(withdrawButton)  //First make sure the button exists
+        withdrawButton.style.display = 'none';
+
+        //if(withdrawButton)  //First make sure the button exists
             withdrawButton.addEventListener('click', () => {
                 console.log('Withdraw button was clicked!');
             });
@@ -102,9 +104,6 @@ import './flightsurety.css';
 
 })();
 
-function withdraw(){
-    console.log('withdraw function called!');
-}
 
 function getAccounts(callback) {
     web3.eth.getAccounts((error,result) => {
@@ -126,10 +125,23 @@ function display(title, description, results) {
         row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
         row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
         if(result.credit)
+        {
+            DOM.elid('withdraw-credit').style.display = 'inline'
+            /* //This code is not working - Would be nice if I can get it to work!
             row.appendChild(DOM.div({className: 'col-sm-4 field-value'},  
-            DOM.button({'id':'withdraw-credit', 'className':'btn btn-primary'})));
+            DOM.button({id:'withdraw-credit2', className:'btn btn-primary'}, 'Withdraw Now')));
+            //or
+            var btn = document.createElement("BUTTON"); 
+            btn.innerHTML = "CLICK ME";                   // Insert text
+            btn.id = 'withdraw-credit';
+            btn.className = 'btn btn-primary';
+            
 
-        section.appendChild(row);
+            row.appendChild(btn);
+            section.appendChild(row);      */
+        }
+
+        
     })
     displayDiv.append(section);
 
