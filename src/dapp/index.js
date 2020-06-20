@@ -71,7 +71,7 @@ import './flightsurety.css';
         });
 
 
-        // User-submitted transaction
+        // Claim Insurance
         DOM.elid('claim-insurance').addEventListener('click', () => {
             let flight = DOM.elid('flight-number-claim').value;
             // Write transaction
@@ -90,10 +90,12 @@ import './flightsurety.css';
         });
 
 
-        // User-submitted transaction
-        DOM.elid('withdraw-credit').addEventListener('click', () => {
-            console.log('Withdraw button was clicked!');
-        });
+        // Withdraw Credit
+        let withdrawButton = DOM.elid('withdraw-credit');
+        if(withdrawButton)  //First make sure the button exists
+            withdrawButton.addEventListener('click', () => {
+                console.log('Withdraw button was clicked!');
+            });
     
     });
     
@@ -125,7 +127,7 @@ function display(title, description, results) {
         row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
         if(result.credit)
             row.appendChild(DOM.div({className: 'col-sm-4 field-value'},  
-            DOM.button('Withdraw', {type:'button', value: 'Withdraw', name:'withdraw-credit'})));
+            DOM.button({'id':'withdraw-credit', 'className':'btn btn-primary'})));
 
         section.appendChild(row);
     })
