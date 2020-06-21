@@ -370,7 +370,16 @@ contract FlightSuretyApp {
         credit = flightSuretyData.creditInsurees(flight, msg.sender);
 
         //5. Emit event for the frontend to allow user to withdraw if they want
-        emit payout(credit, insuree);
+        //emit payout(credit, msg.sender);
+    }
+
+    function withdrawCredit
+                            (
+                                uint credit
+                            )
+                            external
+    {
+        flightSuretyData.pay(credit, msg.sender);
     }
 //end region
 
@@ -565,7 +574,7 @@ contract FlightSuretyData{
     function buy(address customer, bytes32 flight, uint amount) external payable;
     function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights);
     function creditInsurees(bytes32, address) external view returns(uint256 credit);
-    function pay() external view;
+    function pay(uint256, address) external;
     function fund(address, bytes32) public payable;
     function getFlightKey(address airline, string memory flight, uint256 timestamp) internal pure returns(bytes32);
     function() external payable;

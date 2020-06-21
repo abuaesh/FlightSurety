@@ -290,7 +290,7 @@ contract FlightSuretyData {
     }
 
     mapping(address => insuredFlights) allInsuredFlights;
-     mapping(address => uint256) payouts; //Amounts owed to insurees but have not yet been credited to their accounts
+    mapping(address => uint256) payouts; //Amounts owed to insurees but have not yet been credited to their accounts
                                         //These will be credited to the insurees when they initiate a withdrawal.
     //event  payout(uint amount, address insuree); //This contract is not directly connected to the frontend, no need for events here.
     function buy
@@ -368,13 +368,15 @@ contract FlightSuretyData {
     */
     function pay
                             (
-                                uint credit,
+                                uint256 credit,
                                 address insuree
                             )
                             external
                             requireIsOperational
                             //requireAuthorizedCaller
     {
+        require(payouts[insuree] >= credit, 'User does not have enough credit to withraw');
+        payouts[insuree].sub(credit);
         insuree.transfer(credit);
     }
 

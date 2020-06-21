@@ -70,12 +70,13 @@ import './flightsurety.css';
             });
         });
 
-
+        let credit = 0;
         // Claim Insurance
         DOM.elid('claim-insurance').addEventListener('click', () => {
             let flight = DOM.elid('flight-number-claim').value;
             // Write transaction
             contract.claimInsurance(flight, (error, result) => {
+                credit  = result;
                 display('Insurance Amount', 
                     'You are legible to a refund for flight '+flight, 
                     [ { label: 'Refund amount in Ether:', 
@@ -96,7 +97,15 @@ import './flightsurety.css';
 
         //if(withdrawButton)  //First make sure the button exists
             withdrawButton.addEventListener('click', () => {
-                console.log('Withdraw button was clicked!');
+            console.log('Withdraw button was clicked!'+ credit);   
+                if(credit > 0)  //Make sure there is credit
+                {
+                    if(confirm(credit +' Ethers are going to be transferred to this account: '+contract.owner+'\nPlease confirm.'))
+                    {
+                        contract.withdraw(credit);
+                        credit = 0; //reset the credit amount after withdawal -- to prevent multiple withdrawals of same credit
+                    }
+                }
             });
     
     });

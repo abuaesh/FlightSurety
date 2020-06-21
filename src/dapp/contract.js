@@ -96,6 +96,19 @@ export default class Contract {
             );*/
     }
 
+    withdraw(credit){
+        let self = this;
+        //console.log('from contract js, the credit before conversion is: ' + credit)
+        credit *= Math.pow(10, 18);         //convert credit from ethers to wei
+        credit = toBN(credit).toNumber();
+        console.log('from contract js, the credit after conversion is: ' + credit)
+        self.flightSuretyApp.methods
+        .withdrawCredit(credit)
+        .call({from: self.owner}, (error, result) => {
+            callback(error, result);
+        });
+    }
+
     registerFlight(flight, callback) {
         let self = this;
 
