@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -290,7 +290,7 @@ contract FlightSuretyData {
     }
 
     mapping(address => insuredFlights) allInsuredFlights;
-    mapping(address => uint256) payouts; //Amounts owed to insurees but have not yet been credited to their accounts
+    mapping(address => uint) payouts; //Amounts owed to insurees but have not yet been credited to their accounts
                                         //These will be credited to the insurees when they initiate a withdrawal.
     //event  payout(uint amount, address insuree); //This contract is not directly connected to the frontend, no need for events here.
     function buy
@@ -338,12 +338,13 @@ contract FlightSuretyData {
                                 requireIsOperational
                                 //Apply Re-entrancy Gaurd Here(not required by project)
                                 //requireAuthorizedCaller
-                                returns(uint256 credit) //This is a state-changing function, so it cannot return a value
+                                returns(uint credit) //This is a state-changing function, so it cannot return a value
                                 //We will inform caller of the credit amount by emitting an event
     {
         //1. Checks
         credit = allInsuredFlights[insuree].insuranceDetails[flight];
-        require(credit > 0,'You did not insure this flight from before');
+        require(credit > 0,
+                'You either did not insure this flight from before, or you have already claimed the credit for this flight.');
 
         //2. Effects
             //2.a Update the insurance information in your mapping
@@ -351,33 +352,48 @@ contract FlightSuretyData {
             //2.b Calculate the amount the customer must be refunded: 1.5 time the insurance amount
             credit = credit.mul(3);
             credit = credit.div(2);
-
+        require(allInsuredFlights[insuree].insuranceDetails[flight] == 0, 'Could not payout your credit');
         //3. Interaction
-        payouts[insuree].add(credit);
+        payouts[insuree] = payouts[insuree].add(credit);
+        require(payouts[insuree] > 0, 'Unable to add your credit to the payout system');
         //web3.js is not connected to this contract, you need to emit from the app contract
         //just return the tuples and the app contract should do the emit back to the front end
         //emit payout(credit, insuree);
         //Next: when the emitted event is caught in the frontend, allow user to withdraw amount -> withdraw button should appear
-
-        return credit;
     }
 
+
+    function getCredit
+                        (
+                            address insuree
+                        )
+                        external
+                        view
+                        returns(uint credit)
+    {
+        credit = payouts[insuree];
+        return credit;
+    }
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
     function pay
                             (
-                                uint256 credit,
                                 address insuree
                             )
-                            external
+                            public
                             requireIsOperational
                             //requireAuthorizedCaller
     {
-        require(payouts[insuree] >= credit, 'User does not have enough credit to withraw');
-        payouts[insuree].sub(credit);
-        insuree.transfer(credit);
+        uint credit = payouts[insuree];
+        //1. Checks
+        require(credit > 0, 'User does not have credit to withraw');
+        //2. Effects
+        payouts[insuree] = 0; //reset credit to prevent multiple withrawal of the same credit
+        require(payouts[insuree] == 0, 'Could not withdraw credit');
+        //3. Interaction
+        insuree.call.value(credit)("");
     }
 
    /**

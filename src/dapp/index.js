@@ -75,19 +75,23 @@ import './flightsurety.css';
         DOM.elid('claim-insurance').addEventListener('click', () => {
             let flight = DOM.elid('flight-number-claim').value;
             // Write transaction
-            contract.claimInsurance(flight, (error, result) => {
-                credit  = result;
-                display('Insurance Amount', 
-                    'You are legible to a refund for flight '+flight, 
-                    [ { label: 'Refund amount in Ether:', 
-                        error: error, 
-                        value: JSON.stringify(result),
-                        credit: result
-                    } ]);
-                console.log('fetchFlightStatus in contract.js returned error: ' + error);
-                console.log('fetchFlightStatus in contract.js returned result: ' + result);
+            contract.claimInsurance(flight, (errorClaim, resultClaim) => {
                 
-            });
+                contract.getCredit((errorGet, resultGet) => {
+
+                    credit = resultGet / Math.pow(10, 18); //convert from wei back to ether
+
+                    display('Insurance Amount', 
+                        (errorClaim? 'You are not legible to a refund for flight ':'You are legible to a refund for flight ') + flight, 
+                        [ { label: 'Total credit amount in Ether:', 
+                            error: errorGet, 
+                            value: JSON.stringify(credit),
+                            insuranceCredit: credit
+                        } ]);
+                        DOM.elid('withdraw-credit').style.display = 'inline';
+                    console.log('claimInsurance in contract.js returned result: ' + credit);
+                });//end getCredit
+            }); //end claimInsurance
         });
 
 
@@ -97,13 +101,19 @@ import './flightsurety.css';
 
         //if(withdrawButton)  //First make sure the button exists
             withdrawButton.addEventListener('click', () => {
-            console.log('Withdraw button was clicked!'+ credit);   
+            //console.log('Withdraw button was clicked!'+ credit);   
                 if(credit > 0)  //Make sure there is credit
                 {
                     if(confirm(credit +' Ethers are going to be transferred to this account: '+contract.owner+'\nPlease confirm.'))
                     {
-                        contract.withdraw(credit);
-                        credit = 0; //reset the credit amount after withdawal -- to prevent multiple withdrawals of same credit
+                        contract.withdraw((error, result) => {
+                            if(!error){
+                                console.log('You have been credited ' + credit + ' Ethers to your account.')
+                                credit = 0; //reset the credit amount after withdawal -- to prevent misleading messages to the user
+                                withdrawButton.style.display = 'none'; //Do not allow more withdrawals
+                            }else
+                                console.log('Withdraw function returned error: ' + error);
+                        });
                     }
                 }
             });
@@ -133,22 +143,6 @@ function display(title, description, results) {
         let row = section.appendChild(DOM.div({className:'row'}));
         row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
         row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
-        if(result.credit)
-        {
-            DOM.elid('withdraw-credit').style.display = 'inline'
-            /* //This code is not working - Would be nice if I can get it to work!
-            row.appendChild(DOM.div({className: 'col-sm-4 field-value'},  
-            DOM.button({id:'withdraw-credit2', className:'btn btn-primary'}, 'Withdraw Now')));
-            //or
-            var btn = document.createElement("BUTTON"); 
-            btn.innerHTML = "CLICK ME";                   // Insert text
-            btn.id = 'withdraw-credit';
-            btn.className = 'btn btn-primary';
-            
-
-            row.appendChild(btn);
-            section.appendChild(row);      */
-        }
 
         
     })

@@ -83,10 +83,17 @@ export default class Contract {
 
         self.flightSuretyApp.methods
             .claimInsurance(flight)
-            .call({from: self.owner}, (error, result) => {
-                result /= Math.pow(10, 18); //convert from wei back to ether
-                callback(error, result)}
-                );
+            .send({from: self.owner}, callback);
+    }
+
+    getCredit(callback){
+        let self = this;
+
+        self.flightSuretyApp.methods
+        .getCredit()
+        .call({from: self.owner}, callback);
+    }
+            
         
         /* Could not find the correct code for listening to the emitted event
         var payoutEvent = self.flightSuretyApp.payout();
@@ -94,19 +101,13 @@ export default class Contract {
             result /= Math.pow(10, 18); //convert from wei back to ether
             callback(error, result)}
             );*/
-    }
+    
 
-    withdraw(credit){
+    withdraw(callback){
         let self = this;
-        //console.log('from contract js, the credit before conversion is: ' + credit)
-        credit *= Math.pow(10, 18);         //convert credit from ethers to wei
-        credit = toBN(credit).toNumber();
-        console.log('from contract js, the credit after conversion is: ' + credit)
         self.flightSuretyApp.methods
-        .withdrawCredit(credit)
-        .call({from: self.owner}, (error, result) => {
-            callback(error, result);
-        });
+        .withdrawCredit()
+        .send({from: self.owner}, callback);
     }
 
     registerFlight(flight, callback) {

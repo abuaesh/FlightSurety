@@ -1,4 +1,4 @@
-pragma solidity ^0.4.25;
+pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
@@ -349,7 +349,6 @@ contract FlightSuretyApp {
                                 string flight1
                             )
                             external
-                            returns(uint256 credit)
     {
          // 1. Convert flight name from string to bytes32
         string memory flight2 = flight1;
@@ -367,19 +366,28 @@ contract FlightSuretyApp {
         require(flights[flight].statusCode == STATUS_CODE_LATE_AIRLINE, 'Flight status does not imply insurance refunding');
 
         // 4. Forward call to data contract for refund
-        credit = flightSuretyData.creditInsurees(flight, msg.sender);
+        flightSuretyData.creditInsurees(flight, msg.sender);
 
         //5. Emit event for the frontend to allow user to withdraw if they want
         //emit payout(credit, msg.sender);
     }
 
+    function getCredit
+                        (
+
+                        )
+                        external
+                        view
+                        returns(uint credit)
+    {
+        credit = flightSuretyData.getCredit(msg.sender);
+    }
     function withdrawCredit
                             (
-                                uint credit
                             )
-                            external
+                            public
     {
-        flightSuretyData.pay(credit, msg.sender);
+        flightSuretyData.pay(msg.sender);
     }
 //end region
 
@@ -451,7 +459,7 @@ contract FlightSuretyApp {
                             )
                             external
                             view
-                            returns(uint8[3])
+                            returns(uint8[3] memory)
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
@@ -502,7 +510,7 @@ contract FlightSuretyApp {
     function getFlightKey
                         (
                             address airline,
-                            string flight,
+                            string storage flight,
                             uint256 timestamp
                         )
                         internal
@@ -518,9 +526,9 @@ contract FlightSuretyApp {
                                 address account
                             )
                             internal
-                            returns(uint8[3])
+                            returns(uint8[3] storage indexes)
     {
-        uint8[3] memory indexes;
+        //uint8[3] storage indexes;
         indexes[0] = getRandomIndex(account);
         indexes[1] = indexes[0];
         while(indexes[1] == indexes[0]) {
@@ -572,9 +580,10 @@ contract FlightSuretyData{
     function registerAirline(address airline) external;
     function enableVoting() external payable;
     function buy(address customer, bytes32 flight, uint amount) external payable;
-    function viewInsuredFlights(address customer) external returns(bytes32[] insuredFlights);
-    function creditInsurees(bytes32, address) external view returns(uint256 credit);
-    function pay(uint256, address) external;
+    function viewInsuredFlights(address customer) external returns(bytes32[] memory insuredFlights);
+    function creditInsurees(bytes32, address) external view returns(uint credit);
+    function getCredit(address)external view returns(uint credit);
+    function pay(address) public;
     function fund(address, bytes32) public payable;
     function getFlightKey(address airline, string memory flight, uint256 timestamp) internal pure returns(bytes32);
     function() external payable;
