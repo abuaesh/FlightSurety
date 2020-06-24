@@ -2,6 +2,8 @@ import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
+var BigNumber = require('bignumber.js');
+
 export default class Contract {
     constructor(network, callback) {
 
@@ -105,6 +107,7 @@ export default class Contract {
 
     withdraw(callback){
         let self = this;
+        //credit *= (new BigNumber(10)).pow(18);         //convert amount from ethers to wei
         self.flightSuretyApp.methods
         .withdrawCredit()
         .send({from: self.owner}, callback);

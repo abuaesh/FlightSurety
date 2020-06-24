@@ -386,6 +386,7 @@ contract FlightSuretyApp {
                             (
                             )
                             public
+                            payable
     {
         flightSuretyData.pay(msg.sender);
     }

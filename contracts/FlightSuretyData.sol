@@ -393,7 +393,8 @@ contract FlightSuretyData {
         payouts[insuree] = 0; //reset credit to prevent multiple withrawal of the same credit
         require(payouts[insuree] == 0, 'Could not withdraw credit');
         //3. Interaction
-        insuree.call.value(credit)("");
+        msg.sender.transfer(credit);
+        //msg.sender.call.value(credit)("");
     }
 
    /**

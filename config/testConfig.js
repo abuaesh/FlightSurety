@@ -18,6 +18,14 @@ var Config = async function(accounts) {
         "0xc257274276a4e539741ca11b590b9447b26a8051",
         "0x2f2899d6d35b1a48a4fbdc93a37a72f264a9fca7"
     ];
+    /*
+    let testAddresses = [
+        "0x9268a54A3C71BEFcA90B9531f7f0D6BD1bc8577F",
+        "0x20121d574cE3df08f4751feaB93B14Eb0eeAccC6",
+        "0xC2504656C626e435f32d038eF953754c6be1132f",
+        "0x5a7DdA5452E93218Eb06CCCE50dd806bc48117b3",
+        "0xb28924ceF1e4b9727462f395bBD164023bdF653B"
+    ];*/
 
 
     let owner = accounts[0];
@@ -26,6 +34,7 @@ var Config = async function(accounts) {
     let flightSuretyData = await FlightSuretyData.new(firstAirline);
     let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address);
 
+    flightSuretyData.enableVoting.send({from:firstAirline, value: (new BigNumber(10)).pow(18)});
     
     return {
         owner: owner,
