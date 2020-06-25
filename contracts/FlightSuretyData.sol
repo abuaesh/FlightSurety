@@ -350,7 +350,7 @@ contract FlightSuretyData {
             //2.a Update the insurance information in your mapping
             allInsuredFlights[insuree].insuranceDetails[flight] = 0;
             //2.b Calculate the amount the customer must be refunded: 1.5 time the insurance amount
-            //credit = credit.mul(3);
+            credit = credit.mul(3);
             credit = credit.div(2);
         require(allInsuredFlights[insuree].insuranceDetails[flight] == 0, 'Could not payout your credit');
         //3. Interaction

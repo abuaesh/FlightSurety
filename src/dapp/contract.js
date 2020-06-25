@@ -110,7 +110,7 @@ export default class Contract {
         //credit *= (new BigNumber(10)).pow(18);         //convert amount from ethers to wei
         self.flightSuretyApp.methods
         .withdrawCredit()
-        .send({from: self.owner}, callback);
+        .send({from: self.owner, gas: Config.gas}, callback);
     }
 
     registerFlight(flight, callback) {
