@@ -54,8 +54,25 @@ export default class Contract {
                 .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
                 .call({ from: self.owner}, callback);
 
-        //console.log('From outside the promise: result is: ' + JSON.stringify(result));
-            
+        //Listen to updated flight status event from app contract
+        /*self.flightSuretyApp.events.OracleRequest({
+            fromBlock: 0
+          }, function (error, event) {
+              console.log('Listened to Oracle Request event...');
+            if (error) console.log(error)
+            console.log(event)
+        }).on('data', function(event){
+          console.log(event); // same results as the optional callback above
+        })
+        .on('changed', function(event){
+          // remove event from local database
+        })
+        .on('error', console.error);*/
+
+        self.flightSuretyApp.once('OracleRequest', function(error, event){
+            console.log('Listened to the new oracle event.........'+event);
+            if (error) console.log(error);
+        })
     }
 
     buyInsurance(flight, amount, callback) {

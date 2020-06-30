@@ -34,7 +34,7 @@ var Config = async function(accounts) {
     let flightSuretyData = await FlightSuretyData.new(firstAirline);
     let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address);
 
-    flightSuretyData.enableVoting.send({from:firstAirline, value: (new BigNumber(10)).pow(18)});
+    await flightSuretyData.enableVoting({from:firstAirline, value: (new BigNumber(10)).pow(19)});
     
     return {
         owner: owner,

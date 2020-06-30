@@ -72,35 +72,14 @@ contract('Flight Surety Tests', async (accounts) => {
 
   });
 
-  it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
-    
-    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
-      await config.flightSuretyData.setOperatingStatus(true);
-    // ARRANGE
-    let newAirline = accounts[2];
-
-    // ACT
-    try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
-    }
-    catch(e) {
-
-    }
-    let result = await config.flightSuretyData.isRegistered.call(newAirline); 
-
-    // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
-
-  });
-
   it('(airline) can register an Airline using registerAirline() if it is funded', async () => {
     
     if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
       await config.flightSuretyData.setOperatingStatus(true);
     // ARRANGE
     let newAirline = accounts[2];
-    var funds = (new BigNumber(10)).pow(19) ; // 10 ethers     //web3.utils.toWei( '10', 'ether') //web3.toWei(10,'ether');
-    await config.flightSuretyData.enableVoting({from: config.firstAirline, value: funds});
+    //var funds = (new BigNumber(10)).pow(19) ; // 10 ethers     //web3.utils.toWei( '10', 'ether') //web3.toWei(10,'ether');
+    //await config.flightSuretyData.enableVoting({from: config.firstAirline, value: funds});
 
     // ACT
     try {
@@ -114,6 +93,29 @@ contract('Flight Surety Tests', async (accounts) => {
     // ASSERT
     assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
     //assert.equal(await config.flightSuretyData.canVote.call(config.firstAirline), true, "Airline should be able to vote if it has provided funding");
+
+  });
+
+  it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
+    
+    if(!(await config.flightSuretyData.isOperational())) //if the contract is not operational, make it operational
+      await config.flightSuretyData.setOperatingStatus(true);
+    // ARRANGE
+    let newAirline = accounts[3];
+
+    // ACT
+    try {
+      //accounts[2] was already registered in the previous test but is not yet funded,
+      //so it shoulfd not be able to register a new airline
+        await config.flightSuretyApp.registerAirline(newAirline, {from: accounts[2]}); //should fail
+    }
+    catch(e) {
+
+    }
+    let result = await config.flightSuretyData.isRegistered.call(newAirline); 
+
+    // ASSERT
+    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
 
   });
  
