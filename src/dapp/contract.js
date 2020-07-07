@@ -9,6 +9,7 @@ export default class Contract {
 
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        //this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.initialize(callback);
         this.owner = null;
@@ -67,12 +68,17 @@ export default class Contract {
         .on('changed', function(event){
           // remove event from local database
         })
-        .on('error', console.error);*/
-
-        /*self.flightSuretyApp.once('OracleRequest', function(error, event){
+        .on('error', console.error);
+        self.flightSuretyApp.once('OracleRequest', function(error, event){
+            if(error) console.log(error);
             console.log('Listened to the new oracle event. Returned: '+event+' Event.');
-            callback(error,payload);
-        });*/
+        });
+        */
+       self.flightSuretyApp.getPastEvents('OracleRequest', {
+        //filter: {myIndexedParam: [20,23], myOtherIndexedParam: '0x123456789...'}, // Using an array means OR: e.g. 20 or 23
+        fromBlock: 0,
+        toBlock: 'latest'
+    }, function(error, events){ console.log(events); });
     }
 
     buyInsurance(flight, amount, callback) {

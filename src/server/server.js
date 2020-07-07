@@ -28,7 +28,7 @@ web3.eth.getAccounts().then(accounts => {
     "gas": 4712388,
     "gasPrice": 100000000000
   }).then(fee => { 
-    console.log('Smart Contract requires ('+fee+') ethers to fund oracle registration.');
+    console.log('Smart Contract requires ('+fee+') wei to fund oracle registration.');
     accounts.forEach(account => {
       oracles.push(account); //To keep the server updated with oracles addresses 
                                   //Because sometimes the oracle is already registered in the contract from before, 
@@ -40,15 +40,15 @@ web3.eth.getAccounts().then(accounts => {
             "gasPrice": 100000000000
       }).then(result => {
           //oracle created;
-          console.log('Registered: '+account);
+          //console.log('Registered: '+account);
       }).catch(err => {
           // oracle errored
-          console.log('Could not create oracle at address: '+account+'\n\tbecause: '+err);
+          //console.log('Could not create oracle at address: '+account+'\n\tbecause: '+err);
       })
     }); //end forEach account
 
     // Display oracles addresses and indexes previously retrieved from smart contract
-    oracles.forEach(oracle => {
+   /* oracles.forEach(oracle => {
       flightSuretyApp.methods
           .getMyIndexes().call({
             "from": oracle,
@@ -61,17 +61,27 @@ web3.eth.getAccounts().then(accounts => {
             console.log('Could not retrieve oracle indices because: '+error);
           })
 
-    }); //end forEach oracle
+    }); //end forEach oracle*/
 
     console.log('Oracles server all set-up...\nOracles registered and assigned addresses...');
     console.log('Listening to a request event...');
   //Listen for oracleRequest event
-  flightSuretyApp.events.OracleRequest({
-    fromBlock: "latest"
+  /*flightSuretyApp.once('OracleRequest', function(error, event){
+    console.log('Listened to the new oracle event. Returned: '+event+' Event.');
+});*/
+flightSuretyApp.getPastEvents('OracleRequest', {
+  //filter: {myIndexedParam: [20,23], myOtherIndexedParam: '0x123456789...'}, // Using an array means OR: e.g. 20 or 23
+  fromBlock: 'latest'
+  //toBlock: 'latest'
+}, function(error,events){}).then(function(error, events){ 
+  if(error) console.log(error);
+  console.log('Caught an event: '+events); });
+  /*flightSuretyApp.events.OracleRequest({
+    fromBlock: 0
   }, function(error, event) {
     
     console.log('Caught an event: '+event);
-  });
+  });*/
 
   }).catch(err=>{console.log('Could not retrieve registration fee. '+err)});//end REGISTRATION_FEE 
 });//end getAccounts
