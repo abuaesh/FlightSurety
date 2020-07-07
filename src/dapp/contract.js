@@ -69,10 +69,10 @@ export default class Contract {
         })
         .on('error', console.error);*/
 
-        self.flightSuretyApp.once('OracleRequest', function(error, event){
+        /*self.flightSuretyApp.once('OracleRequest', function(error, event){
             console.log('Listened to the new oracle event. Returned: '+event+' Event.');
             callback(error,payload);
-        });
+        });*/
     }
 
     buyInsurance(flight, amount, callback) {

@@ -104,6 +104,7 @@ class OraclesServer {
        }); //end forEach account
       
         this.displayOracles();
+        this.listenForRequests();
       });//end REGISTRATION_FEE 
     });//end getAccounts
     
@@ -127,11 +128,24 @@ class OraclesServer {
           });
     }); //end forEach oracle
     
+    console.log('Oracles server all set-up... ');
+  }//end displayOracles
+  
+  listenForRequests()
+  {
+    console.log('Listening to a request event...');
     //Listen for oracleRequest event
-    this.flightSuretyApp.once('OracleRequest', event => {
-      console.log('Listened to the new oracle request event. Returned: '+event+' Event.');
-      //callback(error,payload);
+    this.flightSuretyApp.events.OracleRequest({
+      fromBlock: "latest"
+    }, function (error, event) {
+      if (error) {
+          console.log(error);
+      }
+      console.log(event);
     });
+    /*this.flightSuretyApp.once('OracleRequest', event => {
+      console.log('Listened to the new oracle request event. Returned: '+event+' Event.');
+    });*/
   }
 
 }//end OraclesServer Class
