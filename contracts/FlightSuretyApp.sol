@@ -446,16 +446,6 @@ contract FlightSuretyApp {
     // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
-    //Getter for REGISTRATION_FEE
-    function getRegistrationFee
-                                (
-                                )
-                                external
-                                returns(uint256)
-                                {
-                                    return REGISTRATION_FEE;
-                                }
-
     // Register an oracle with the contract
     function registerOracle
                             (
