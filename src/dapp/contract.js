@@ -8,8 +8,8 @@ export default class Contract {
     constructor(network, callback) {
 
         let config = Config[network];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-        //this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
+        //this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.initialize(callback);
         this.owner = null;
@@ -53,32 +53,15 @@ export default class Contract {
         } 
         self.flightSuretyApp.methods
                 .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-                .call({ from: self.owner}, callback);
+                .send({ from: self.owner}, callback);
 
-        //Listen to updated flight status event from app contract
-        /*self.flightSuretyApp.events.OracleRequest({
-            fromBlock: 0
-          }, function (error, event) {
-              console.log('Listened to Oracle Request event...');
-            if (error) console.log(error)
-            console.log(event)
-        }).on('data', function(event){
-          console.log(event); // same results as the optional callback above
-        })
-        .on('changed', function(event){
-          // remove event from local database
-        })
-        .on('error', console.error);
-        self.flightSuretyApp.once('OracleRequest', function(error, event){
+        //Listen to updated flight status event from app contract       
+        self.flightSuretyApp.events.OracleRequest({fromBlock: 'latest'}, 
+            function(error,event) {
             if(error) console.log(error);
-            console.log('Listened to the new oracle event. Returned: '+event+' Event.');
-        });
-        */
-       self.flightSuretyApp.getPastEvents('OracleRequest', {
-        //filter: {myIndexedParam: [20,23], myOtherIndexedParam: '0x123456789...'}, // Using an array means OR: e.g. 20 or 23
-        fromBlock: 0,
-        toBlock: 'latest'
-    }, function(error, events){ console.log(events); });
+            console.log('Caught an event: ');
+            console.log(event['returnValues']);
+            });
     }
 
     buyInsurance(flight, amount, callback) {

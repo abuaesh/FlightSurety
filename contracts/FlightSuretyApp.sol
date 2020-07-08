@@ -298,7 +298,7 @@ contract FlightSuretyApp {
                                                 isOpen: true
                                             });
 
-        emit OracleRequest(index, airline, flight, timestamp);
+        OracleRequest(index, airline, flight, timestamp);
 
     }
 // region INSURANCE PURCHASE MANAGEMENT
@@ -568,10 +568,14 @@ contract FlightSuretyApp {
         uint8 maxValue = 10;
 
         // Pseudo random number...the incrementing nonce adds variation
-        uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
+        //uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
+                    //Removed the blockhash function because it hinders the randomness for block.number - nonce that do not exist -> will always give the same result
+        uint8 random = uint8(uint256(keccak256(abi.encodePacked((block.number - nonce), account))) % maxValue);
 
         if (nonce > 250) {
-            nonce = 0;  // Can only fetch blockhashes for last 256 blocks so we adapt
+            nonce = 0;  // Can only fetch blockhashes for last 256 blocks so we adapt --cancelled the blockhash function for the reason in the comment above
+        }else{
+            nonce += 23; //because the nonce should not increase at the same rate of block.number
         }
 
         return random;
