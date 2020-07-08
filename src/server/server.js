@@ -15,8 +15,10 @@ const ORACLES_COUNT = 20;
 let FIRST_ORACLE_ADDRESS;
 let LAST_ORACLE_ADDRESS;
 
+// This is an IIFE (Immediately invoked function expression) just to provide this `async` keyword
 (async function () {
 
+    // Fetch web3 accounts
     let accounts = await web3.eth.getAccounts();
 
     FIRST_ORACLE_ADDRESS = accounts.length - ORACLES_COUNT -1;
@@ -27,6 +29,7 @@ let LAST_ORACLE_ADDRESS;
     console.log(`Starting from accounts[${FIRST_ORACLE_ADDRESS}] for the first oracle.`);
     console.log(`Ending at accounts[${LAST_ORACLE_ADDRESS}] for the last oracle.`);
 
+    // Use `.call` to fetch the current registration fee value
     let fee = await flightSuretyApp.methods.REGISTRATION_FEE().call({
         "from": accounts[0],
         "gas": 4712388,
@@ -35,6 +38,7 @@ let LAST_ORACLE_ADDRESS;
 
     console.log(`Smart Contract requires ${fee} wei to fund oracle registration.`);
 
+    // Register all available oracles using the `accounts` array and await the process to finish
     await Promise.all(
         accounts.map(account => {
             return flightSuretyApp.methods.registerOracle().send({
@@ -49,23 +53,22 @@ let LAST_ORACLE_ADDRESS;
     console.log("Oracles server all set-up...\nOracles registered and assigned addresses...");
     console.log("Listening to a request event...");
 
+    // Once all oracles are registered we can start listening to oracle requests
     flightSuretyApp.events.OracleRequest({
         "fromBlock": "latest"
     }, (error, event) => {
         if (error) {
             console.log(error);
         } else {
+
+            // @TODO You have to assign the random status code and submit the `submitOracleResponse` within this block.
             console.log(event);
         }
     });
 
 }());
 
-
-
-
-
-  
+// Simple HTTP server using express.js, you don't have to worry about it
 const app = express();
 app.get("/api", (req, res) => {
     res.send({
