@@ -65,23 +65,48 @@ web3.eth.getAccounts().then(accounts => {
 
     console.log('Oracles server all set-up...\nOracles registered and assigned addresses...');
     console.log('Listening to a request event...');
+
   //Listen for oracleRequest event
-  /*flightSuretyApp.once('OracleRequest', function(error, event){
-    console.log('Listened to the new oracle event. Returned: '+event+' Event.');
-});*/
-flightSuretyApp.getPastEvents('OracleRequest', {
-  //filter: {myIndexedParam: [20,23], myOtherIndexedParam: '0x123456789...'}, // Using an array means OR: e.g. 20 or 23
-  fromBlock: 'latest'
-  //toBlock: 'latest'
-}, function(error,events){}).then(function(error, events){ 
-  if(error) console.log(error);
-  console.log('Caught an event: '+events); });
-  /*flightSuretyApp.events.OracleRequest({
-    fromBlock: 0
-  }, function(error, event) {
-    
-    console.log('Caught an event: '+event);
-  });*/
+
+  /* //1. 
+  flightSuretyApp.once('OracleRequest', event=>{
+        console.log('Listened to the new oracle event. Returned this event: ');
+        console.log(event);
+      });
+  */
+  /* //2. Senses the past event but not current ones that fire, Plus, event is undefined
+  flightSuretyApp.getPastEvents('OracleRequest', {fromBlock: 'latest'},
+    function(error,events){}).then(function(error, events){ 
+      if(error) console.log(error);
+      console.log('Caught an event: ');
+      console.log(events); });
+  */
+
+  /* //3.
+  flightSuretyApp.events.allEvents()
+    .on('data', (event) => {
+      console.log(event);
+    })
+    .on('error', console.error);
+  */
+  
+  /* //4. 
+  flightSuretyApp.events.allEvents({fromBlock: 'latest'}, 
+        function(error, event){
+          if(error) console.log(error);
+          console.log('Caught an event: ');
+          console.log(events);
+        });
+  */
+  
+  /* //5.
+  flightSuretyApp.events.OracleRequest({fromBlock: 'latest'}, 
+    function(error, event) {
+      if(error) console.log(error);
+      console.log('Caught an event: ');
+      console.log(event);
+    });
+  */
 
   }).catch(err=>{console.log('Could not retrieve registration fee. '+err)});//end REGISTRATION_FEE 
 });//end getAccounts
