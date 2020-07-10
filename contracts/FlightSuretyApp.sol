@@ -272,8 +272,8 @@ contract FlightSuretyApp {
         assembly {
             theFlight := mload(add(newFlight, 32)) //convert flight name from string to bytes32
         }
-        require(flights[theFlight].airline == airline,
-                    'Trying to register new flight status, but airlines do not match');
+        //require(flights[theFlight].airline == airline,
+          //          'Trying to register new flight status, but airlines do not match');
         flights[theFlight].statusCode = statusCode;
         flights[theFlight].updatedTimestamp = timestamp;
     }
@@ -371,9 +371,8 @@ contract FlightSuretyApp {
         // 2. Ensure the flight exists in the supported flights
         require(flights[flight].isRegistered, 'This flight is not registered for insurance');
 
-        flights[flight].statusCode = STATUS_CODE_LATE_AIRLINE; //for testing only
-
         // 3. Ensure the flight status is one that implies refund -> STATUS_CODE_LATE_AIRLINE = 20
+        require(flights[flight].statusCode != STATUS_CODE_UNKNOWN, 'Flight status unknown, submit request to fetch it from oracles');
         require(flights[flight].statusCode == STATUS_CODE_LATE_AIRLINE, 'Flight status does not imply insurance refunding');
 
         // 4. Forward call to data contract for refund
@@ -436,9 +435,10 @@ contract FlightSuretyApp {
     // Key = hash(index, flight, timestamp)
     mapping(bytes32 => ResponseInfo) private oracleResponses;
 
-    // Event fired each time an oracle submits a response
+    //Event fired when oracles reach a consesus about flight status
     event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
-
+    
+    // Event fired each time an oracle submits a response
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 
     // Event fired when flight status request is submitted

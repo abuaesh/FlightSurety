@@ -15,6 +15,7 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+        this.fetched = [];
     }
 
     initialize(callback) {
@@ -55,13 +56,47 @@ export default class Contract {
                 .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
                 .send({ from: self.owner}, callback);
 
-        //Listen to updated flight status event from app contract       
+        //Listen to request for flight status from oracles event emitted by app contract       
         self.flightSuretyApp.events.OracleRequest({fromBlock: 'latest'}, 
             function(error,event) {
             if(error) console.log(error);
-            console.log('Caught an event: ');
+            console.log('Caught an event- Request oracles for flight status: ');
             console.log(event['returnValues']);
-            });
+            //Wait for 10 seconds to allow all oracles to respond to this event, if not, inform user that the fetch failed
+            //setTimeout(this.failedFetch, 10000, flight );
+
+            //Listen to updated flight status event emitted by app contract       
+            self.flightSuretyApp.events.FlightStatusInfo({fromBlock: 'latest'}, 
+            function(error,event) {
+                if(error) console.log(error);
+                console.log('Caught an event- Updated Flight status:');
+                let eventValues = event['returnValues'];
+                console.log(eventValues);
+                //Update fetch array for this flight
+                self.updateFetched(eventValues['flight'], eventValues['timestamp']);
+            });// end FlightStatusInfo
+        });// end OracleRequest
+
+    }
+
+    failedFetch(flight)
+    {
+            if(!(this.isFetched(flight))) //flight status not updated since 2 minutes
+                console.log('Sorry, oracles were not able to reach a consensus. Please try again!');
+    }
+    updateFetched(flight, timestamp)
+    {
+        let self = this;
+        self.fetched[flight] = timestamp;
+    }
+
+    isFetched(flight){
+        let self = this;
+
+        if(self.fetched[flight] == 0  //Flight not fetched before
+            || Math.floor(Date.now() / 1000) - self.fetched[flight] > 120 ) //Flight's last status updated more than 2 minutes ago
+            return false; 
+        else  return true;
     }
 
     buyInsurance(flight, amount, callback) {
@@ -88,10 +123,16 @@ export default class Contract {
 
     claimInsurance(flight, callback){
         let self = this;
-
-        self.flightSuretyApp.methods
+        let fetched = isFetched(flight);
+        if(!fetched) //Flight status unkown or outdated
+        {
+            //go fetch flight status first
+            self.fetchFlightStatus(flight, callback);
+        }else{
+            self.flightSuretyApp.methods
             .claimInsurance(flight)
             .send({from: self.owner}, callback);
+        }    
     }
 
     getCredit(callback){
