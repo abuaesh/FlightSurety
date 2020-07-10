@@ -15,7 +15,9 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
-        this.fetched = [];
+        this.fetched = []; //Keeps track of the last time a flight was fetched
+                            //To make sure the used flight statuses are always up-to-date
+                            // -- this.fetched[flight] = timestamp;
     }
 
     initialize(callback) {
@@ -54,7 +56,9 @@ export default class Contract {
         } 
         self.flightSuretyApp.methods
                 .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-                .send({ from: self.owner}, callback);
+                .send({ from: self.owner});
+
+        let status = '90'; //Oracles did not reach a consensus
 
         //Listen to request for flight status from oracles event emitted by app contract       
         self.flightSuretyApp.events.OracleRequest({fromBlock: 'latest'}, 
@@ -62,8 +66,16 @@ export default class Contract {
             if(error) console.log(error);
             console.log('Caught an event- Request oracles for flight status: ');
             console.log(event['returnValues']);
-            //Wait for 10 seconds to allow all oracles to respond to this event, if not, inform user that the fetch failed
-            //setTimeout(this.failedFetch, 10000, flight );
+            //Wait for 2 seconds to allow all oracles to respond to this event, if not, inform user that the fetch failed
+            setTimeout(function(){
+                
+                if(status == '90') //Oracles did not reach a consensus--i.e. No event fired to indicate status update
+                {
+                    let error = 'Oracles did not reach a consensus. Sorry! Please try again.';
+                    console.log(error);
+                    callback(error, status);
+                }
+            }, 2000, flight );
 
             //Listen to updated flight status event emitted by app contract       
             self.flightSuretyApp.events.FlightStatusInfo({fromBlock: 'latest'}, 
@@ -74,22 +86,22 @@ export default class Contract {
                 console.log(eventValues);
                 //Update fetch array for this flight
                 self.updateFetched(eventValues['flight'], eventValues['timestamp']);
+                status = eventValues['status'];
+                callback(null, status);
             });// end FlightStatusInfo
         });// end OracleRequest
 
     }
 
-    failedFetch(flight)
-    {
-            if(!(this.isFetched(flight))) //flight status not updated since 2 minutes
-                console.log('Sorry, oracles were not able to reach a consensus. Please try again!');
-    }
+    //Keeps track of the last time a flight was fetched
     updateFetched(flight, timestamp)
     {
         let self = this;
         self.fetched[flight] = timestamp;
     }
 
+    // Returns if the flight is up-to date
+    // Returns true if the given flight was fetched recently(in the last two minutes), fasle if not.
     isFetched(flight){
         let self = this;
 

@@ -64,9 +64,24 @@ import './flightsurety.css';
             let flight = DOM.elid('flight-number-oracles').value;
             // Write transaction
             contract.fetchFlightStatus(flight, (error, result) => {
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: JSON.stringify(result)} ]);
-                //console.log('fetchFlightStatus in contract.js returned error: ' + error);
-                //console.log('fetchFlightStatus in contract.js returned result: ' + result);
+                /* Flight status codes
+                STATUS_CODE_UNKNOWN = 0; 
+                STATUS_CODE_ON_TIME = 10;
+                STATUS_CODE_LATE_AIRLINE = 20;
+                STATUS_CODE_LATE_WEATHER = 30;
+                STATUS_CODE_LATE_TECHNICAL = 40;
+                STATUS_CODE_LATE_OTHER = 50;*/
+                let status = '';
+                switch(result)
+                {
+                    case '0': status = 'Unkown';  break;
+                    case '10': status = 'On Time'; break;
+                    case '20': status = 'Late- airline'; break;
+                    case '30': status = 'Late- Weather'; break;
+                    case '40': status = 'Late- Technical'; break;
+                    case '50': status = 'Late- Other';
+                }
+                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: status} ]);
             });
         });
 
@@ -142,7 +157,7 @@ function display(title, description, results) {
     results.map((result) => {
         let row = section.appendChild(DOM.div({className:'row'}));
         row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : result.value));
 
         
     })
