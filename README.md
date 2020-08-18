@@ -1,6 +1,15 @@
 # FlightSurety
 
-FlightSurety is a sample application project for Udacity's Blockchain course.
+FlightSurety is a sample application for ensuring airline flights using the Ethereum blockchain. 
+
+## Project Requirements
+There are five main requirements for the project:
+
+1. Separation of Concerns
+2. Airlines
+3. Passengers
+4. Oracles
+5. General
 
 ## Install
 
